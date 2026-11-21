@@ -1,1 +1,1 @@
-# Multiple-PDF-Compressor
+# FileEase - All-in-One PDF & Image Tools
