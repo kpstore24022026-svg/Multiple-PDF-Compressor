@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <meta name="description" content="Compress PDF, Resize Images, Convert 500+ Images to PDF, Extract PDF Pages, Edit PDF, and Edit Images in one secure browser workspace.">
+  <meta name="description" content="Compress PDF, Resize Images, Convert 500+ Images to PDF, Extract PDF Pages, Extract Text from Images/PDF (OCR), Edit PDF, and Edit Images in one secure browser workspace.">
   <title>FileEase — All-in-One PDF & Image Tools</title>
   <!-- Browser Title Bar / Tab Icon (Favicon) -->
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0%25' stop-color='%233B82F6'/%3E%3Cstop offset='100%25' stop-color='%231D4ED8'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='64' height='64' rx='16' fill='url(%23g)'/%3E%3Cpath d='M20 12h16l12 12v24a4 4 0 0 1-4 4H20a4 4 0 0 1-4-4V16a4 4 0 0 1 4-4z' fill='none' stroke='%23FFFFFF' stroke-width='3.5' stroke-linejoin='round'/%3E%3Cpath d='M36 12v12h12' fill='none' stroke='%2393C5FD' stroke-width='3.5' stroke-linejoin='round'/%3E%3Cpath d='M32 28v16m0 0-5-5m5 5 5-5' fill='none' stroke='%23FFFFFF' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
@@ -1507,6 +1507,725 @@
       height: 18px;
     }
 
+
+    /* ================= OCR VIEW (IMG/PDF TO TEXT) ================= */
+    .ocr-workspace-view {
+      height: calc(100vh - var(--header-height));
+      display: none;
+      overflow-y: auto;
+      background:
+        radial-gradient(circle at 40% 20%, rgba(255, 255, 255, 0.78), transparent 45%),
+        var(--workspace-background);
+      padding: 24px 22px 48px;
+    }
+
+    .ocr-workspace-view.active {
+      display: block;
+    }
+
+    .ocr-container {
+      max-width: 1040px;
+      margin: 0 auto;
+    }
+
+    .ocr-card {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-sm);
+      padding: 24px;
+    }
+
+    .ocr-header-bar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+
+    .ocr-header-title h1 {
+      margin: 0 0 4px;
+      font-size: 20px;
+      font-weight: 850;
+      color: var(--text-main);
+      letter-spacing: -0.35px;
+    }
+
+    .ocr-header-title p {
+      margin: 0;
+      font-size: 13px;
+      color: var(--text-secondary);
+    }
+
+    .ocr-lang-pills {
+      display: inline-flex;
+      background: #EEF2F8;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 3px;
+      gap: 3px;
+    }
+
+    .ocr-lang-pill {
+      padding: 6px 12px;
+      border: 0;
+      border-radius: 7px;
+      background: transparent;
+      color: var(--text-secondary);
+      font-size: 12px;
+      font-weight: 750;
+      cursor: pointer;
+      transition: all var(--transition);
+    }
+
+    .ocr-lang-pill.active {
+      background: var(--white);
+      color: var(--primary);
+      box-shadow: 0 2px 6px rgba(23, 37, 84, 0.08);
+    }
+
+    .ocr-dz {
+      border: 2px dashed var(--primary-border);
+      border-radius: 16px;
+      padding: 34px 20px;
+      text-align: center;
+      cursor: pointer;
+      background: rgba(248, 250, 255, 0.85);
+      transition: all var(--transition);
+    }
+
+    .ocr-dz:hover,
+    .ocr-dz.drag {
+      border-color: var(--primary);
+      background: var(--white);
+      box-shadow: 0 12px 30px rgba(37, 99, 235, 0.10);
+      transform: translateY(-2px);
+    }
+
+    .ocr-dz.compact {
+      padding: 14px 18px;
+    }
+
+    .ocr-dz.compact .ocr-dz-extra {
+      display: none;
+    }
+
+    .ocr-dz-icon {
+      width: 56px;
+      height: 56px;
+      margin: 0 auto 12px;
+      border-radius: 15px;
+      display: grid;
+      place-items: center;
+      color: var(--primary);
+      background: linear-gradient(145deg, var(--primary-light), #DBEAFE);
+      border: 1px solid var(--primary-border);
+      box-shadow: 0 8px 18px var(--primary-ring);
+    }
+
+    .ocr-dz-icon svg {
+      width: 26px;
+      height: 26px;
+    }
+
+    .ocr-dz-title {
+      margin: 0 0 6px;
+      font-size: 18px;
+      font-weight: 800;
+      color: var(--text-main);
+    }
+
+    .ocr-dz.compact .ocr-dz-title {
+      font-size: 14px;
+      margin-bottom: 10px;
+    }
+
+    .ocr-dz-sub {
+      margin: 0 0 16px;
+      font-size: 13px;
+      color: var(--text-secondary);
+    }
+
+    .ocr-btn-row {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 10px;
+    }
+
+    .ocr-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      padding: 9px 16px;
+      border-radius: 10px;
+      font-size: 13px;
+      font-weight: 750;
+      cursor: pointer;
+      border: 1px solid var(--border);
+      background: var(--white);
+      color: var(--text-main);
+      transition: all var(--transition);
+    }
+
+    .ocr-btn:hover:not(:disabled) {
+      border-color: var(--primary-border);
+      background: var(--primary-light);
+      color: var(--primary);
+      transform: translateY(-1px);
+    }
+
+    .ocr-btn-primary {
+      background: linear-gradient(135deg, #3B82F6, var(--primary));
+      border-color: var(--primary);
+      color: var(--white);
+      box-shadow: 0 8px 20px rgba(37, 99, 235, 0.22);
+    }
+
+    .ocr-btn-primary:hover:not(:disabled) {
+      background: var(--primary-hover);
+      border-color: var(--primary-hover);
+      color: var(--white);
+    }
+
+    .ocr-btn-success {
+      background: linear-gradient(135deg, #16A34A, #15803D);
+      border-color: #15803D;
+      color: var(--white);
+    }
+
+    .ocr-btn-success:hover:not(:disabled) {
+      background: #166534;
+      color: var(--white);
+    }
+
+    .ocr-btn-danger {
+      color: var(--error);
+      background: var(--error-light);
+      border-color: rgba(220, 38, 38, 0.25);
+    }
+
+    .ocr-btn-danger:hover:not(:disabled) {
+      background: var(--error);
+      color: var(--white);
+    }
+
+    .ocr-btn:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .ocr-chips {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 6px;
+      margin-top: 16px;
+    }
+
+    .ocr-chip {
+      font-size: 11px;
+      font-weight: 750;
+      padding: 3px 8px;
+      border-radius: 6px;
+      background: var(--white);
+      border: 1px solid var(--border);
+      color: var(--text-secondary);
+    }
+
+    .ocr-workspace-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 290px;
+      gap: 16px;
+      margin-top: 16px;
+    }
+
+    .ocr-stage {
+      position: relative;
+      height: 330px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: #F8FAFC;
+      overflow: hidden;
+    }
+
+    .ocr-stage img {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      padding: 12px;
+    }
+
+    .ocr-stage.scanning::after {
+      content: "";
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 4%;
+      height: 3px;
+      background: linear-gradient(90deg, transparent, var(--primary), #60A5FA, transparent);
+      box-shadow: 0 0 16px 4px rgba(37, 99, 235, 0.45);
+      animation: ocrScan 1.6s ease-in-out infinite alternate;
+    }
+
+    @keyframes ocrScan {
+      to { top: 96%; }
+    }
+
+    .ocr-file-list {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      max-height: 380px;
+      overflow-y: auto;
+    }
+
+    .ocr-frow {
+      display: flex;
+      align-items: center;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: var(--white);
+      transition: all var(--transition);
+    }
+
+    .ocr-frow.sel {
+      border-color: var(--primary);
+      background: var(--primary-light);
+      box-shadow: 0 0 0 3px var(--primary-ring);
+    }
+
+    .ocr-fmain {
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 7px 8px;
+      border: 0;
+      background: transparent;
+      text-align: left;
+      cursor: pointer;
+    }
+
+    .ocr-fmain img {
+      width: 40px;
+      height: 40px;
+      object-fit: cover;
+      border-radius: 7px;
+      border: 1px solid var(--border);
+      background: var(--white);
+      flex: 0 0 40px;
+    }
+
+    .ocr-fname {
+      display: block;
+      font-size: 12px;
+      font-weight: 750;
+      color: var(--text-main);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .ocr-fmeta {
+      display: flex;
+      gap: 5px;
+      align-items: center;
+      font-size: 11px;
+      color: var(--text-secondary);
+      margin-top: 2px;
+    }
+
+    .ocr-fx {
+      width: 28px;
+      height: 28px;
+      margin-right: 6px;
+      border: 0;
+      border-radius: 7px;
+      background: transparent;
+      color: var(--text-light);
+      display: grid;
+      place-items: center;
+      cursor: pointer;
+    }
+
+    .ocr-fx:hover:not(:disabled) {
+      background: var(--error-light);
+      color: var(--error);
+    }
+
+    .ocr-controls-bar {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
+      gap: 14px;
+      align-items: end;
+      margin-top: 18px;
+      padding-top: 18px;
+      border-top: 1px solid var(--border);
+    }
+
+    .ocr-select {
+      width: 100%;
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: 9px;
+      padding: 9px 12px;
+      color: var(--text-main);
+      font-size: 13px;
+      font-weight: 650;
+    }
+
+    .ocr-switch {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+      font-size: 12.5px;
+      font-weight: 650;
+      color: var(--text-main);
+      min-height: 38px;
+    }
+
+    .ocr-switch input {
+      width: 17px;
+      height: 17px;
+      accent-color: var(--primary);
+    }
+
+    .ocr-progress-box {
+      margin-top: 16px;
+      padding: 12px 14px;
+      background: var(--primary-light);
+      border: 1px solid var(--primary-border);
+      border-radius: 11px;
+    }
+
+    .ocr-pbar {
+      height: 8px;
+      border-radius: 99px;
+      background: #DCE6F5;
+      overflow: hidden;
+      margin-top: 8px;
+    }
+
+    .ocr-pbar i {
+      display: block;
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #60A5FA, var(--primary));
+      border-radius: 99px;
+      transition: width 250ms ease;
+    }
+
+    .ocr-editor-card {
+      margin-top: 20px;
+      background: var(--white);
+      border: 1.5px solid var(--primary-border);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-md);
+      overflow: hidden;
+    }
+
+    .ocr-tabs {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+      overflow-x: auto;
+      padding: 0 18px 12px;
+    }
+
+    .ocr-tab {
+      display: flex;
+      align-items: center;
+      max-width: 210px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--white);
+    }
+
+    .ocr-tab.on {
+      border-color: var(--primary);
+      background: var(--primary-light);
+      box-shadow: 0 0 0 2px var(--primary-ring);
+    }
+
+    .ocr-tab > button:first-child {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      min-width: 0;
+      padding: 6px 8px;
+      border: 0;
+      background: transparent;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .ocr-tab > button:first-child span {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .ocr-tabx {
+      width: 22px;
+      height: 22px;
+      margin-right: 4px;
+      border: 0;
+      border-radius: 5px;
+      background: transparent;
+      color: var(--text-light);
+      cursor: pointer;
+    }
+
+    .ocr-tabx:hover {
+      background: var(--error-light);
+      color: var(--error);
+    }
+
+    .ocr-tb {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      align-items: center;
+      padding: 10px 14px;
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      background: #F8FAFC;
+    }
+
+    .ocr-tbtn {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 6px 10px;
+      border-radius: 7px;
+      border: 1px solid var(--border);
+      background: var(--white);
+      color: var(--text-main);
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all var(--transition);
+    }
+
+    .ocr-tbtn:hover:not(:disabled) {
+      border-color: var(--primary-border);
+      background: var(--primary-light);
+      color: var(--primary);
+    }
+
+    .ocr-tbtn.danger {
+      color: var(--error);
+    }
+
+    .ocr-findbar {
+      padding: 10px 14px;
+      background: #F8FAFF;
+      border-bottom: 1px solid var(--border);
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .ocr-inp {
+      width: 100%;
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 7px 10px;
+      font-size: 12.5px;
+      color: var(--text-main);
+    }
+
+    .ocr-ed-wrap {
+      position: relative;
+      background: var(--white);
+    }
+
+    #ocrBackdrop,
+    #ocrEditor {
+      font-family: Inter, "Noto Sans Devanagari", system-ui, sans-serif;
+      font-size: var(--ocr-fs, 15px);
+      line-height: 1.65;
+      padding: 16px 18px;
+      white-space: pre-wrap;
+      overflow-wrap: break-word;
+      box-sizing: border-box;
+      margin: 0;
+      border: 0;
+    }
+
+    #ocrBackdrop {
+      position: absolute;
+      top: 0;
+      left: 0;
+      height: 100%;
+      overflow: hidden;
+      color: transparent;
+      pointer-events: none;
+    }
+
+    #ocrEditor {
+      position: relative;
+      display: block;
+      width: 100%;
+      height: 320px;
+      min-height: 220px;
+      resize: vertical;
+      background: transparent;
+      color: var(--text-main);
+      outline: 0;
+    }
+
+    #ocrBackdrop mark.hit {
+      background: #FDE68A;
+      color: transparent;
+      border-radius: 3px;
+    }
+
+    #ocrBackdrop mark.hit.cur {
+      background: #FB923C;
+    }
+
+    .ocr-stats-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 18px;
+      padding: 10px 18px;
+      font-size: 12px;
+      color: var(--text-secondary);
+      border-top: 1px solid var(--border);
+      background: #F8FAFC;
+    }
+
+    .ocr-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 3px 9px;
+      border-radius: 99px;
+      font-size: 11px;
+      font-weight: 750;
+      background: var(--primary-light);
+      color: var(--primary);
+      border: 1px solid var(--primary-border);
+    }
+
+    /* OCR Crop Modal */
+    .ocr-crop-backdrop {
+      position: fixed;
+      inset: 0;
+      z-index: 220;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 18px;
+      background: rgba(23, 37, 84, 0.45);
+      backdrop-filter: blur(8px);
+    }
+
+    .ocr-crop-backdrop.open {
+      display: flex;
+    }
+
+    .ocr-crop-card {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      width: min(680px, 100%);
+      padding: 20px;
+      box-shadow: var(--shadow-lg);
+    }
+
+    #ocrCropStage {
+      position: relative;
+      display: inline-block;
+      line-height: 0;
+      overflow: hidden;
+      border-radius: 8px;
+      touch-action: none;
+      user-select: none;
+      cursor: crosshair;
+      max-width: 100%;
+    }
+
+    #ocrCropImg {
+      display: block;
+      max-width: 100%;
+      max-height: 52vh;
+      width: auto;
+      height: auto;
+      pointer-events: none;
+    }
+
+    #ocrCropBox {
+      position: absolute;
+      border: 2px solid var(--primary);
+      box-shadow: 0 0 0 9999px rgba(23, 37, 84, 0.52);
+      cursor: move;
+    }
+
+    #ocrCropBox i {
+      position: absolute;
+      width: 24px;
+      height: 24px;
+    }
+
+    #ocrCropBox i::after {
+      content: "";
+      position: absolute;
+      width: 12px;
+      height: 12px;
+      border: 0 solid #FFFFFF;
+    }
+
+    #ocrCropBox i[data-h=nw] { left: -3px; top: -3px; cursor: nwse-resize; }
+    #ocrCropBox i[data-h=nw]::after { left: 0; top: 0; border-width: 3px 0 0 3px; }
+    #ocrCropBox i[data-h=ne] { right: -3px; top: -3px; cursor: nesw-resize; }
+    #ocrCropBox i[data-h=ne]::after { right: 0; top: 0; border-width: 3px 3px 0 0; }
+    #ocrCropBox i[data-h=sw] { left: -3px; bottom: -3px; cursor: nesw-resize; }
+    #ocrCropBox i[data-h=sw]::after { left: 0; bottom: 0; border-width: 0 0 3px 3px; }
+    #ocrCropBox i[data-h=se] { right: -3px; bottom: -3px; cursor: nwse-resize; }
+    #ocrCropBox i[data-h=se]::after { right: 0; bottom: 0; border-width: 0 3px 3px 0; }
+
+    .spin-dot {
+      width: 13px;
+      height: 13px;
+      border-radius: 50%;
+      border: 2px solid currentColor;
+      border-right-color: transparent;
+      display: inline-block;
+      animation: ocrSpin 0.7s linear infinite;
+    }
+
+    @keyframes ocrSpin {
+      to { transform: rotate(360deg); }
+    }
+
+    @media (max-width: 820px) {
+      .ocr-workspace-grid {
+        grid-template-columns: 1fr;
+      }
+      .ocr-controls-bar {
+        grid-template-columns: 1fr;
+      }
+      .ocr-findbar {
+        grid-template-columns: 1fr;
+      }
+    }
+
     /* ================= FULL-HEIGHT STUDIO EDITORS (EDIT PDF & EDIT IMG) ================= */
     .studio-editor-view {
       height: calc(100vh - var(--header-height));
@@ -2951,6 +3670,14 @@
           <span>PDF to IMG</span>
         </button>
 
+        <button class="tool-tab" id="tabOcr" type="button" role="tab" aria-selected="false" data-tool="ocr">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2"/>
+            <path d="M7 8h10M7 12h10M7 16h6"/>
+          </svg>
+          <span>IMG/PDF to Text</span>
+        </button>
+
         <span class="tool-switcher-sep" aria-hidden="true"></span>
 
         <button class="tool-tab" id="tabEditPdf" type="button" role="tab" aria-selected="false" data-tool="editPdf">
@@ -3253,6 +3980,260 @@
       </div>
     </aside>
   </main>
+
+  <!-- ================= STUDIO VIEW 0: IMG/PDF TO TEXT (OCR) ================= -->
+  <section class="ocr-workspace-view" id="ocrWorkspaceView" aria-label="IMG/PDF to Text OCR Workspace">
+    <div class="ocr-container">
+      <div class="ocr-card">
+        <div class="ocr-header-bar">
+          <div class="ocr-header-title">
+            <h1 id="ocrMainHeading">IMG / PDF to Text Converter (OCR)</h1>
+            <p id="ocrMainSub">Extract editable Hindi &amp; English text from images, screenshots, photos, and scanned PDFs locally in your browser.</p>
+          </div>
+          <div class="ocr-lang-pills" role="group" aria-label="Interface language">
+            <button type="button" class="ocr-lang-pill active" id="ocrUiEnBtn" data-ocrui="en">English</button>
+            <button type="button" class="ocr-lang-pill" id="ocrUiHiBtn" data-ocrui="hi">हिन्दी</button>
+          </div>
+        </div>
+
+        <input id="ocrFileInput" type="file" hidden multiple accept=".jpg,.jpeg,.png,.webp,.bmp,.tif,.tiff,.pdf,image/jpeg,image/png,image/webp,image/bmp,image/tiff,application/pdf">
+
+        <div id="ocrDz" class="ocr-dz">
+          <div class="ocr-dz-icon ocr-dz-extra">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242M12 12v9"/>
+              <path d="m16 16-4-4-4 4"/>
+            </svg>
+          </div>
+          <p class="ocr-dz-title" id="ocrDzTitle">Drag &amp; drop your images or scanned PDFs here</p>
+          <p class="ocr-dz-sub ocr-dz-extra" id="ocrDzSub">or click anywhere to browse — you can also paste with Ctrl + V</p>
+          <div class="ocr-btn-row">
+            <button type="button" id="ocrUploadBtn" class="ocr-btn ocr-btn-primary">
+              <i data-lucide="upload" style="width:15px;height:15px;"></i>
+              <span id="ocrUploadBtnTxt">Upload IMG / PDF</span>
+            </button>
+            <button type="button" id="ocrPasteBtn" class="ocr-btn">
+              <i data-lucide="clipboard-paste" style="width:15px;height:15px;"></i>
+              <span id="ocrPasteBtnTxt">Paste Image</span>
+            </button>
+            <button type="button" id="ocrSampleBtn" class="ocr-btn ocr-dz-extra">
+              <i data-lucide="sparkles" style="width:15px;height:15px;"></i>
+              <span id="ocrSampleBtnTxt">Try Sample</span>
+            </button>
+          </div>
+          <div class="ocr-chips ocr-dz-extra">
+            <span class="ocr-chip">JPG</span><span class="ocr-chip">PNG</span><span class="ocr-chip">WEBP</span>
+            <span class="ocr-chip">BMP</span><span class="ocr-chip">TIFF</span><span class="ocr-chip">PDF</span>
+            <span class="ocr-chip">Max 15 MB · Up to 20 files</span>
+          </div>
+        </div>
+
+        <!-- OCR Active Workspace -->
+        <div id="ocrWorkspace" style="display:none; margin-top:18px;">
+          <div style="display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:10px;">
+            <div style="display:flex; align-items:center; gap:8px;">
+              <strong style="font-size:15px; color:var(--text-main);" id="ocrUploadedLabel">Uploaded files</strong>
+              <span class="ocr-badge" id="ocrFileCount">0</span>
+            </div>
+            <div style="display:flex; gap:8px;">
+              <button type="button" id="ocrAddMore" class="ocr-tbtn">
+                <i data-lucide="plus" style="width:14px;height:14px;"></i> <span id="ocrAddMoreTxt">Add more</span>
+              </button>
+              <button type="button" id="ocrClearFiles" class="ocr-tbtn danger" data-ocredit>
+                <i data-lucide="trash-2" style="width:14px;height:14px;"></i> <span id="ocrClearAllTxt">Clear all</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="ocr-workspace-grid">
+            <div>
+              <div class="ocr-stage" id="ocrStage"><img id="ocrPreviewImg" alt=""></div>
+              <div style="display:flex; flex-wrap:wrap; align-items:center; gap:6px; margin-top:10px;">
+                <span style="font-size:12px; color:var(--text-secondary); margin-right:auto; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:260px;">
+                  <strong id="ocrPvName" style="color:var(--text-main);"></strong> <span id="ocrPvInfo"></span>
+                </span>
+                <button type="button" id="ocrRotL" class="ocr-tbtn" data-ocredit title="Rotate Left">
+                  <i data-lucide="rotate-ccw" style="width:13px;height:13px;"></i> Left
+                </button>
+                <button type="button" id="ocrRotR" class="ocr-tbtn" data-ocredit title="Rotate Right">
+                  <i data-lucide="rotate-cw" style="width:13px;height:13px;"></i> Right
+                </button>
+                <button type="button" id="ocrCropBtn" class="ocr-tbtn" data-ocredit title="Crop">
+                  <i data-lucide="crop" style="width:13px;height:13px;"></i> Crop
+                </button>
+                <button type="button" id="ocrResetBtn" class="ocr-tbtn" data-ocredit style="display:none;" title="Reset">
+                  <i data-lucide="undo-2" style="width:13px;height:13px;"></i> Reset
+                </button>
+                <button type="button" id="ocrRmBtn" class="ocr-tbtn danger" data-ocredit title="Remove">
+                  <i data-lucide="trash-2" style="width:13px;height:13px;"></i> Remove
+                </button>
+              </div>
+            </div>
+            <ul id="ocrFileList" class="ocr-file-list" aria-label="Uploaded files"></ul>
+          </div>
+
+          <div class="ocr-controls-bar">
+            <div>
+              <label for="ocrLang" id="ocrLangLabel" style="display:block; font-size:11.5px; font-weight:750; color:var(--text-secondary); margin-bottom:5px; text-transform:uppercase;">Text language</label>
+              <select id="ocrLang" class="ocr-select">
+                <option value="auto">Auto detect (Hindi + English)</option>
+                <option value="eng">English</option>
+                <option value="hin">Hindi (हिन्दी)</option>
+              </select>
+            </div>
+            <label class="ocr-switch">
+              <input type="checkbox" id="ocrAutoDelete" checked>
+              <span id="ocrAutoDelLabel">Auto-delete images after processing</span>
+            </label>
+            <button type="button" id="ocrExtractBtn" class="ocr-btn ocr-btn-primary" style="height:42px; padding:0 20px;">
+              <i data-lucide="sparkles" style="width:16px;height:16px;"></i>
+              <span id="ocrExtractTxt">Extract Text</span><span id="ocrExtractCount"></span>
+            </button>
+          </div>
+
+          <div id="ocrProgress" class="ocr-progress-box" style="display:none;">
+            <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; font-size:12.5px;">
+              <span id="ocrPText" style="font-weight:700; color:var(--text-main);"></span>
+              <div style="display:flex; align-items:center; gap:10px;">
+                <span id="ocrPPct" style="font-weight:850; color:var(--primary);">0%</span>
+                <button type="button" id="ocrCancelBtn" class="ocr-tbtn">Cancel</button>
+              </div>
+            </div>
+            <div class="ocr-pbar"><i id="ocrPBar"></i></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Extracted Text Editor Card -->
+      <div id="ocrEditorCard" class="ocr-editor-card" style="display:none;">
+        <div style="display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:10px; padding:16px 18px 12px;">
+          <div style="display:flex; align-items:center; gap:10px;">
+            <div style="width:38px; height:38px; border-radius:10px; background:var(--primary-light); border:1px solid var(--primary-border); color:var(--primary); display:grid; place-items:center;">
+              <i data-lucide="file-text" style="width:19px;height:19px;"></i>
+            </div>
+            <div>
+              <h3 id="ocrExtractedHeading" style="margin:0; font-size:16px; font-weight:850; color:var(--text-main);">Extracted Text</h3>
+              <p id="ocrDocName" style="margin:2px 0 0; font-size:12px; color:var(--text-secondary);"></p>
+            </div>
+          </div>
+          <span id="ocrLangBadge" class="ocr-badge" style="display:none;"></span>
+        </div>
+
+        <div id="ocrTabs" class="ocr-tabs" role="tablist" style="display:none;"></div>
+
+        <div class="ocr-tb" role="toolbar">
+          <button type="button" id="ocrBCopy" class="ocr-btn ocr-btn-primary" style="padding:6px 12px; font-size:12px;">
+            <i data-lucide="copy" style="width:14px;height:14px;"></i> <span id="ocrCopyTxt">Copy Text</span>
+          </button>
+          <button type="button" id="ocrBSelect" class="ocr-tbtn">
+            <i data-lucide="check-square" style="width:14px;height:14px;"></i> Select All
+          </button>
+          <button type="button" id="ocrBFind" class="ocr-tbtn">
+            <i data-lucide="search" style="width:14px;height:14px;"></i> Find &amp; Replace
+          </button>
+          <button type="button" id="ocrZOut" class="ocr-tbtn" title="Zoom Out">A-</button>
+          <span id="ocrZVal" style="font-size:12px; font-weight:750; min-width:38px; text-align:center;">100%</span>
+          <button type="button" id="ocrZIn" class="ocr-tbtn" title="Zoom In">A+</button>
+          <button type="button" id="ocrDTxt" class="ocr-tbtn" style="border-color:var(--primary-border); color:var(--primary);">
+            <i data-lucide="download" style="width:13px;height:13px;"></i> TXT
+          </button>
+          <button type="button" id="ocrDDocx" class="ocr-tbtn" style="border-color:var(--primary-border); color:var(--primary);">
+            <i data-lucide="download" style="width:13px;height:13px;"></i> DOCX
+          </button>
+          <button type="button" id="ocrDPdf" class="ocr-tbtn" style="border-color:var(--primary-border); color:var(--primary);">
+            <i data-lucide="download" style="width:13px;height:13px;"></i> PDF
+          </button>
+          <button type="button" id="ocrBClear" class="ocr-tbtn danger" style="margin-left:auto;">
+            <i data-lucide="eraser" style="width:14px;height:14px;"></i> Clear Text
+          </button>
+        </div>
+
+        <div id="ocrFindBar" class="ocr-findbar" style="display:none;">
+          <div style="position:relative;">
+            <input id="ocrFQ" class="ocr-inp" type="text" placeholder="Find…" autocomplete="off">
+            <span id="ocrFCount" style="position:absolute; right:10px; top:50%; transform:translateY(-50%); font-size:11px; color:var(--text-secondary);"></span>
+          </div>
+          <input id="ocrFR" class="ocr-inp" type="text" placeholder="Replace with…" autocomplete="off">
+          <div style="grid-column:1 / -1; display:flex; flex-wrap:wrap; align-items:center; gap:6px;">
+            <button type="button" id="ocrFPrev" class="ocr-tbtn">Prev</button>
+            <button type="button" id="ocrFNext" class="ocr-tbtn">Next</button>
+            <button type="button" id="ocrFRep" class="ocr-tbtn">Replace</button>
+            <button type="button" id="ocrFAll" class="ocr-tbtn">Replace all</button>
+            <label style="display:flex; align-items:center; gap:5px; font-size:12px; font-weight:650; margin-left:6px; cursor:pointer;">
+              <input type="checkbox" id="ocrFCase" style="accent-color:var(--primary);"> Match case
+            </label>
+            <button type="button" id="ocrFClose" class="ocr-tbtn" style="margin-left:auto;">Close</button>
+          </div>
+        </div>
+
+        <div class="ocr-ed-wrap">
+          <div id="ocrBackdrop" aria-hidden="true"></div>
+          <textarea id="ocrEditor" spellcheck="false" placeholder="Your extracted text will appear here…"></textarea>
+        </div>
+
+        <div class="ocr-stats-bar">
+          <span>Characters: <strong id="ocrSChars" style="color:var(--text-main);">0</strong></span>
+          <span>Words: <strong id="ocrSWords" style="color:var(--text-main);">0</strong></span>
+          <span>Lines: <strong id="ocrSLines" style="color:var(--text-main);">0</strong></span>
+          <span id="ocrAutoDlBadge" style="margin-left:auto; color:var(--success); font-weight:750;"></span>
+        </div>
+      </div>
+
+      <!-- Atma Shanti Modern Responsive Channel Banner (IMG/PDF to Text) -->
+      <a class="promo-banner-slot" id="ocrPromoBannerSlot" href="https://www.youtube.com/@AtmaShanti-1508" target="_blank" rel="noopener noreferrer" title="Visit Atma Shanti on YouTube">
+        <div class="promo-banner-inner">
+          <div class="promo-brand-group">
+            <div class="promo-logo-badge" title="Atma Shanti Logo">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M18.178 8c5.096 0 5.096 8 0 8-5.095 0-7.095-8-12.178-8-5.096 0-5.096 8 0 8 5.083 0 7.083-8 12.178-8z"/>
+              </svg>
+            </div>
+            <div class="promo-text-content">
+              <div class="promo-title-row">
+                <span class="promo-channel-name">Atma Shanti</span>
+                <svg class="promo-trishul-icon" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M11 2v3.08C9.28 5.43 8 7.06 8 9v3H5V9c0-.55-.45-1-1-1s-1 .45-1 1v4c0 1.1.9 2 2 2h6v7h2v-7h6c1.1 0 2-.9 2-2V9c0-.55-.45-1-1-1s-1 .45-1 1v3h-3V9c0-1.94-1.28-3.57-3-3.92V2h-2z"/>
+                </svg>
+              </div>
+              <span class="promo-slogan">शिव मंत्र • ध्यान • भक्ति संगीत • आत्मिक शांति</span>
+            </div>
+          </div>
+          <div class="promo-cta-btn">
+            <svg viewBox="0 0 24 24">
+              <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+            </svg>
+            <span>Visit Channel</span>
+          </div>
+        </div>
+      </a>
+    </div>
+  </section>
+
+  <!-- OCR Crop Modal -->
+  <div id="ocrCropModal" class="ocr-crop-backdrop" role="dialog" aria-modal="true" aria-labelledby="ocrCropTitle">
+    <div class="ocr-crop-card">
+      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px;">
+        <div>
+          <h3 id="ocrCropTitle" style="margin:0; font-size:17px; font-weight:800; color:var(--text-main);">Crop Image for OCR</h3>
+          <p style="margin:2px 0 0; font-size:12px; color:var(--text-secondary);">Drag corners to select the area to keep.</p>
+        </div>
+        <button type="button" class="ocr-tbtn" id="ocrCropCloseBtn">Close</button>
+      </div>
+      <div style="text-align:center; background:#F1F5F9; border-radius:10px; padding:10px;">
+        <div id="ocrCropStage">
+          <img id="ocrCropImg" alt="Crop preview">
+          <div id="ocrCropBox"><i data-h="nw"></i><i data-h="ne"></i><i data-h="sw"></i><i data-h="se"></i></div>
+        </div>
+      </div>
+      <div style="display:flex; align-items:center; justify-content:space-between; margin-top:14px;">
+        <span id="ocrCropDims" class="ocr-badge"></span>
+        <div style="display:flex; gap:8px;">
+          <button type="button" class="ocr-tbtn" id="ocrCropCancelBtn">Cancel</button>
+          <button type="button" class="ocr-btn ocr-btn-primary" id="ocrCropApplyBtn">Apply Crop</button>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <!-- ================= STUDIO VIEW 1: EDIT PDF ================= -->
   <section class="studio-editor-view" id="pdfEditorView" aria-label="PDF Editor Workspace">
@@ -3903,6 +4884,7 @@
 
       // ================= SHARED HEADER & NAVIGATION STATE =================
       const batchAppShell = document.getElementById("batchAppShell");
+      const ocrWorkspaceView = document.getElementById("ocrWorkspaceView");
       const pdfEditorView = document.getElementById("pdfEditorView");
       const imgEditorView = document.getElementById("imgEditorView");
 
@@ -3910,6 +4892,7 @@
       const tabImg = document.getElementById("tabImg");
       const tabImgToPdf = document.getElementById("tabImgToPdf");
       const tabPdfToImg = document.getElementById("tabPdfToImg");
+      const tabOcr = document.getElementById("tabOcr");
       const tabEditPdf = document.getElementById("tabEditPdf");
       const tabEditImg = document.getElementById("tabEditImg");
 
@@ -3959,6 +4942,11 @@
             <path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z" stroke="currentColor" stroke-width="1.8"/>
             <circle cx="10" cy="12" r="1.4" fill="currentColor"/>
             <path d="m7 18 3.5-3.5 2.5 2.5 2-2 2.5 2.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+          </svg>`,
+        brandOcr: `
+          <svg viewBox="0 0 24 24" fill="none">
+            <path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/>
+            <path d="M7 8h10M7 12h10M7 16h6" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/>
           </svg>`,
         brandEditPdf: `
           <svg viewBox="0 0 24 24" fill="none">
@@ -4148,6 +5136,7 @@
           [tabImg, "img"],
           [tabImgToPdf, "img2pdf"],
           [tabPdfToImg, "pdf2img"],
+          [tabOcr, "ocr"],
           [tabEditPdf, "editPdf"],
           [tabEditImg, "editImg"]
         ].forEach(([el, key]) => {
@@ -4156,10 +5145,19 @@
           el.setAttribute("aria-selected", isAct);
         });
 
-        // Toggle between Batch Shell and Studio Editors
+        // Toggle between Batch Shell, OCR View, and Studio Editors
         batchAppShell.classList.toggle("hidden", !isBatchTool(tool));
+        ocrWorkspaceView.classList.toggle("active", tool === "ocr");
         pdfEditorView.classList.toggle("active", tool === "editPdf");
         imgEditorView.classList.toggle("active", tool === "editImg");
+
+        if (tool === "ocr") {
+          document.title = "IMG/PDF to Text — Free Hindi & English OCR";
+          brandMarkIcon.innerHTML = sharedIcons.brandOcr;
+          brandNameText.innerHTML = `IMG/PDF<span>toText</span>`;
+          if (window.ocrOnTabActivated) window.ocrOnTabActivated();
+          return;
+        }
 
         if (tool === "editPdf") {
           document.title = "EditPDF — Interactive PDF Editor Studio";
@@ -4349,6 +5347,7 @@
       tabImg.addEventListener("click", () => switchTool("img"));
       tabImgToPdf.addEventListener("click", () => switchTool("img2pdf"));
       tabPdfToImg.addEventListener("click", () => switchTool("pdf2img"));
+      tabOcr.addEventListener("click", () => switchTool("ocr"));
       tabEditPdf.addEventListener("click", () => switchTool("editPdf"));
       tabEditImg.addEventListener("click", () => switchTool("editImg"));
 
@@ -5529,6 +6528,16 @@
         window.setTimeout(() => {
           inlineResultsSection.scrollIntoView({ behavior: "smooth", block: "start" });
         }, 80);
+
+        // Automatic download after 3 seconds for all batch tools (Compress PDF, Resize IMG, IMG to PDF, PDF to IMG)
+        if (processedResults.length > 0) {
+          showToast("Auto-downloading in 3 seconds…", "info");
+          window.setTimeout(() => {
+            if (processedResults.length > 0 && isBatchTool(activeTool)) {
+              downloadAllResults();
+            }
+          }, 3000);
+        }
       }
 
       function triggerDownload(url, name) {
@@ -9483,5 +10492,814 @@
       lucide.createIcons();
     }
   </script>
+
+  <!-- ================= 3. IMG/PDF TO TEXT (OCR) ENGINE ================= -->
+  <script>
+    (() => {
+      'use strict';
+      const $ = (s, r = document) => r.querySelector(s);
+      const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+      const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+      const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+
+      const LIB = {
+        tess: 'https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js',
+        pdf: 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js',
+        pdfWorker: 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js',
+        jspdf: 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js',
+        utif: 'https://cdn.jsdelivr.net/npm/utif@3.1.0/UTIF.js'
+      };
+      const MAX_FILES = 20, MAX_SIZE = 15 * 1024 * 1024;
+
+      const HI = {
+        'IMG / PDF to Text Converter (OCR)': 'इमेज / PDF से टेक्स्ट कन्वर्टर (OCR)',
+        'Extract editable Hindi & English text from images, screenshots, photos, and scanned PDFs locally in your browser.': 'अपने ब्राउज़र में इमेज, स्क्रीनशॉट, फ़ोटो और स्कैन किए गए PDF से संपादन योग्य हिन्दी और अंग्रेज़ी टेक्स्ट निकालें।',
+        'Drag & drop your images or scanned PDFs here': 'अपनी इमेज या स्कैन किए गए PDF यहाँ खींचकर छोड़ें',
+        'or click anywhere to browse — you can also paste with Ctrl + V': 'या ब्राउज़ करने के लिए कहीं भी क्लिक करें — आप Ctrl + V से पेस्ट भी कर सकते हैं',
+        'Upload IMG / PDF': 'इमेज / PDF अपलोड करें',
+        'Paste Image': 'इमेज पेस्ट करें',
+        'Try Sample': 'नमूना आज़माएँ',
+        'Uploaded files': 'अपलोड की गई फ़ाइलें',
+        'Add more': 'और जोड़ें',
+        'Clear all': 'सभी हटाएँ',
+        'Text language': 'टेक्स्ट की भाषा',
+        'Auto-delete images after processing': 'प्रोसेसिंग के बाद इमेज अपने-आप हटाएँ',
+        'Extract Text': 'टेक्स्ट निकालें',
+        'Extracted Text': 'निकाला गया टेक्स्ट',
+        'Copy Text': 'टेक्स्ट कॉपी करें',
+        'Copied!': 'कॉपी हो गया!',
+        'Ready': 'तैयार',
+        'Processing': 'प्रोसेस हो रहा है',
+        'Done': 'पूर्ण',
+        'Failed': 'विफल',
+        'Merge all': 'सभी मिलाएँ',
+        'Merged text': 'संयुक्त टेक्स्ट',
+        'Detected': 'पहचानी गई भाषा',
+        'Hindi': 'हिन्दी',
+        'English': 'अंग्रेज़ी',
+        'Hindi + English': 'हिन्दी + अंग्रेज़ी'
+      };
+
+      let uiLang = 'en';
+      const tr = (s) => (uiLang === 'hi' && HI[s]) || s;
+
+      const dz = $('#ocrDz'), fileInput = $('#ocrFileInput'), workspace = $('#ocrWorkspace'),
+        fileList = $('#ocrFileList'), stage = $('#ocrStage'), previewImg = $('#ocrPreviewImg'),
+        ocrLang = $('#ocrLang'), autoDelete = $('#ocrAutoDelete'), extractBtn = $('#ocrExtractBtn'),
+        progress = $('#ocrProgress'), pBar = $('#ocrPBar'), pText = $('#ocrPText'), pPct = $('#ocrPPct'),
+        editorCard = $('#ocrEditorCard'), tabs = $('#ocrTabs'), ed = $('#ocrEditor'),
+        backdrop = $('#ocrBackdrop'), findBar = $('#ocrFindBar'), fQ = $('#ocrFQ'),
+        fR = $('#ocrFR'), fCase = $('#ocrFCase'), fCount = $('#ocrFCount');
+
+      let items = [], selectedId = null, docs = [], activeDoc = null, busy = false, cancelFn = null, uid = 0, pct = 0, fs = 15, matches = [], mi = -1;
+      const curItem = () => items.find(i => i.id === selectedId);
+      const curDoc = () => docs.find(d => d.id === activeDoc);
+
+      const loadedScripts = {};
+      function loadScript(src) {
+        if (src === LIB.pdf && window.pdfjsLib) return Promise.resolve();
+        return loadedScripts[src] || (loadedScripts[src] = new Promise((res, rej) => {
+          const s = document.createElement('script');
+          s.src = src;
+          s.onload = () => res();
+          s.onerror = () => { delete loadedScripts[src]; s.remove(); rej(new Error('Script failed: ' + src)); };
+          document.head.appendChild(s);
+        }));
+      }
+
+      const loadImage = url => new Promise((res, rej) => {
+        const i = new Image();
+        i.onload = () => res(i);
+        i.onerror = () => rej(new Error('Image decode failed'));
+        i.src = url;
+      });
+
+      const canvasBlob = (c, type, q) => new Promise((res, rej) => c.toBlob(b => b ? res(b) : rej(new Error('Canvas export failed')), type, q));
+      const fmtSize = b => b < 1024 ? b + ' B' : b < 1048576 ? Math.round(b / 1024) + ' KB' : (b / 1048576).toFixed(1) + ' MB';
+
+      function saveBlob(blob, name) {
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = name;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+        window.showAppToast(`Downloaded ${name}`, 'success');
+      }
+
+      function applyUiLang() {
+        $('#ocrMainHeading').textContent = tr('IMG / PDF to Text Converter (OCR)');
+        $('#ocrMainSub').textContent = tr('Extract editable Hindi & English text from images, screenshots, photos, and scanned PDFs locally in your browser.');
+        $('#ocrDzTitle').textContent = tr('Drag & drop your images or scanned PDFs here');
+        $('#ocrDzSub').textContent = tr('or click anywhere to browse — you can also paste with Ctrl + V');
+        $('#ocrUploadBtnTxt').textContent = tr('Upload IMG / PDF');
+        $('#ocrPasteBtnTxt').textContent = tr('Paste Image');
+        $('#ocrSampleBtnTxt').textContent = tr('Try Sample');
+        $('#ocrUploadedLabel').textContent = tr('Uploaded files');
+        $('#ocrAddMoreTxt').textContent = tr('Add more');
+        $('#ocrClearAllTxt').textContent = tr('Clear all');
+        $('#ocrLangLabel').textContent = tr('Text language');
+        $('#ocrAutoDelLabel').textContent = tr('Auto-delete images after processing');
+        $('#ocrExtractTxt').textContent = tr('Extract Text');
+        $('#ocrExtractedHeading').textContent = tr('Extracted Text');
+        $('#ocrCopyTxt').textContent = tr('Copy Text');
+        renderFiles();
+        renderDocs();
+      }
+
+      $$('[data-ocrui]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          uiLang = btn.dataset.ocrui;
+          $$('[data-ocrui]').forEach(b => b.classList.toggle('active', b === btn));
+          applyUiLang();
+        });
+      });
+
+      window.ocrOnTabActivated = () => {
+        if (window.lucide) lucide.createIcons();
+      };
+
+      /* ---------- Adding files ---------- */
+      async function addImageBlob(blob, name) {
+        const url = URL.createObjectURL(blob);
+        try {
+          const img = await loadImage(url);
+          items.push({ id: 'f' + (++uid), name, blob, orig: blob, url, w: img.naturalWidth, h: img.naturalHeight, status: 'ready', edited: false });
+          return 1;
+        } catch (e) {
+          URL.revokeObjectURL(url);
+          throw e;
+        }
+      }
+
+      async function addPdf(f) {
+        window.showAppToast('Reading PDF pages…', 'info');
+        await loadScript(LIB.pdf);
+        const pdfjs = window.pdfjsLib;
+        pdfjs.GlobalWorkerOptions.workerSrc = LIB.pdfWorker;
+        const pdf = await pdfjs.getDocument({ data: await f.arrayBuffer() }).promise;
+        const base = f.name.replace(/\.pdf$/i, '');
+        let n = 0;
+        for (let p = 1; p <= pdf.numPages; p++) {
+          if (items.length >= MAX_FILES) { window.showAppToast('You can add up to 20 files', 'error'); break; }
+          const page = await pdf.getPage(p), v1 = page.getViewport({ scale: 1 });
+          const vp = page.getViewport({ scale: Math.min(2.2, 2600 / Math.max(v1.width, v1.height)) });
+          const c = document.createElement('canvas');
+          c.width = Math.ceil(vp.width);
+          c.height = Math.ceil(vp.height);
+          await page.render({ canvasContext: c.getContext('2d'), viewport: vp }).promise;
+          n += await addImageBlob(await canvasBlob(c, 'image/jpeg', 0.92), `${base} – page ${p}.jpg`);
+        }
+        return n;
+      }
+
+      async function addTiff(f) {
+        await loadScript(LIB.utif);
+        const buf = await f.arrayBuffer(), ifds = window.UTIF.decode(buf);
+        let n = 0;
+        for (const ifd of ifds.slice(0, 10)) {
+          if (items.length >= MAX_FILES) break;
+          window.UTIF.decodeImage(buf, ifd);
+          if (!ifd.width || !ifd.height) continue;
+          const rgba = window.UTIF.toRGBA8(ifd), c = document.createElement('canvas');
+          c.width = ifd.width;
+          c.height = ifd.height;
+          c.getContext('2d').putImageData(new ImageData(new Uint8ClampedArray(rgba.buffer, rgba.byteOffset, rgba.length), ifd.width, ifd.height), 0, 0);
+          n += await addImageBlob(await canvasBlob(c, 'image/png'), f.name.replace(/\.tiff?$/i, '') + (n ? ` – page ${n + 1}` : '') + '.png');
+        }
+        if (!n) throw new Error('Empty TIFF');
+        return n;
+      }
+
+      const IMG_EXT = ['jpg', 'jpeg', 'png', 'webp', 'bmp'], IMG_MIME = ['image/jpeg', 'image/png', 'image/webp', 'image/bmp', 'image/x-ms-bmp'];
+      async function addFiles(list) {
+        const files = [...list];
+        if (!files.length) return;
+        let added = 0;
+        for (const f of files) {
+          if (items.length >= MAX_FILES) { window.showAppToast('You can add up to 20 files', 'error'); break; }
+          let name = f.name || 'image.png';
+          if (name === 'image.png') name = 'pasted-image-' + new Date().toTimeString().slice(0, 8).replace(/:/g, '') + '.png';
+          const ext = (name.split('.').pop() || '').toLowerCase();
+          const kind = f.type === 'application/pdf' || ext === 'pdf' ? 'pdf' : f.type === 'image/tiff' || ext === 'tif' || ext === 'tiff' ? 'tiff' : IMG_MIME.includes(f.type) || IMG_EXT.includes(ext) ? 'img' : null;
+          if (!kind) { window.showAppToast(`Unsupported format: ${name}`, 'error'); continue; }
+          if (f.size > MAX_SIZE) { window.showAppToast(`${name} is larger than 15 MB`, 'error'); continue; }
+          try {
+            added += kind === 'pdf' ? await addPdf(f) : kind === 'tiff' ? await addTiff(f) : await addImageBlob(f, name);
+          } catch (e) {
+            console.error(e);
+            window.showAppToast(`Could not read ${name}`, 'error');
+          }
+        }
+        if (added) {
+          if (!curItem()) selectedId = items[items.length - added].id;
+          renderFiles();
+          window.showAppToast(`${added} file(s) added`, 'success');
+        }
+      }
+
+      function removeItem(id) {
+        const i = items.findIndex(x => x.id === id);
+        if (i < 0) return;
+        URL.revokeObjectURL(items[i].url);
+        items.splice(i, 1);
+      }
+
+      function statusHtml(it) {
+        if (it.status === 'processing') return `<span style="color:var(--primary);font-weight:750;display:inline-flex;align-items:center;gap:4px;"><span class="spin-dot"></span>${tr('Processing')}</span>`;
+        if (it.status === 'done') return `<span style="color:var(--success);font-weight:750;">✓ ${tr('Done')}</span>`;
+        if (it.status === 'error') return `<span style="color:var(--error);font-weight:750;">${tr('Failed')}</span>`;
+        return `<span>${tr('Ready')}</span>`;
+      }
+
+      function renderFiles() {
+        const has = items.length > 0;
+        workspace.style.display = has ? 'block' : 'none';
+        dz.classList.toggle('compact', has);
+        $('#ocrFileCount').textContent = items.length;
+        if (!has) {
+          selectedId = null;
+          previewImg.removeAttribute('src');
+          return;
+        }
+        if (!curItem()) selectedId = items[0].id;
+        fileList.innerHTML = items.map(it => `<li class="ocr-frow${it.id === selectedId ? ' sel' : ''}"><button type="button" class="ocr-fmain" data-sel="${it.id}"><img src="${it.url}" alt=""><span style="min-width:0;flex:1;"><span class="ocr-fname">${esc(it.name)}</span><span class="ocr-fmeta">${fmtSize(it.blob.size)} · ${statusHtml(it)}</span></span></button><button type="button" class="ocr-fx" data-rm="${it.id}" title="Remove"${busy ? ' disabled' : ''}>✕</button></li>`).join('');
+        const it = curItem();
+        if (previewImg.getAttribute('src') !== it.url) previewImg.src = it.url;
+        previewImg.alt = it.name;
+        $('#ocrPvName').textContent = it.name;
+        $('#ocrPvInfo').textContent = `· ${it.w} × ${it.h} px`;
+        $('#ocrResetBtn').style.display = it.edited ? 'inline-flex' : 'none';
+        stage.classList.toggle('scanning', it.status === 'processing');
+        const pending = items.filter(i => i.status !== 'done').length || items.length;
+        $('#ocrExtractCount').textContent = pending > 1 ? ` (${pending})` : '';
+        $$('[data-ocredit]').forEach(b => b.disabled = busy);
+      }
+
+      fileList.addEventListener('click', e => {
+        const rm = e.target.closest('[data-rm]'), sel = e.target.closest('[data-sel]');
+        if (rm && !busy) { removeItem(rm.dataset.rm); renderFiles(); }
+        else if (sel) { selectedId = sel.dataset.sel; renderFiles(); }
+      });
+
+      $('#ocrUploadBtn').onclick = $('#ocrAddMore').onclick = () => fileInput.click();
+      dz.addEventListener('click', e => { if (!e.target.closest('button')) fileInput.click(); });
+      fileInput.onchange = () => { addFiles(fileInput.files); fileInput.value = ''; };
+      $('#ocrClearFiles').onclick = () => { if (busy) return; items.slice().forEach(i => removeItem(i.id)); renderFiles(); window.showAppToast('All files cleared', 'info'); };
+      $('#ocrRmBtn').onclick = () => { if (busy || !curItem()) return; removeItem(selectedId); renderFiles(); };
+
+      // Drag & drop inside OCR view
+      const ocrView = $('#ocrWorkspaceView');
+      ['dragenter', 'dragover'].forEach(ev => {
+        ocrView.addEventListener(ev, e => {
+          if (window.activeAppTool !== 'ocr') return;
+          e.preventDefault();
+          dz.classList.add('drag');
+        });
+      });
+      ['dragleave', 'drop'].forEach(ev => {
+        ocrView.addEventListener(ev, e => {
+          if (window.activeAppTool !== 'ocr') return;
+          e.preventDefault();
+          dz.classList.remove('drag');
+        });
+      });
+      ocrView.addEventListener('drop', e => {
+        if (window.activeAppTool !== 'ocr') return;
+        if (e.dataTransfer?.files?.length) addFiles(e.dataTransfer.files);
+      });
+
+      document.addEventListener('paste', e => {
+        if (window.activeAppTool !== 'ocr') return;
+        const fl = [...((e.clipboardData && e.clipboardData.files) || [])].filter(f => /^image\/|\/pdf$/.test(f.type));
+        if (fl.length) { e.preventDefault(); addFiles(fl); }
+      });
+
+      $('#ocrPasteBtn').onclick = async () => {
+        try {
+          const its = await navigator.clipboard.read(), out = [];
+          for (const it of its) {
+            const t = it.types.find(x => x.startsWith('image/'));
+            if (t) out.push(new File([await it.getType(t)], 'image.png', { type: t }));
+          }
+          out.length ? addFiles(out) : window.showAppToast('No image found in clipboard', 'info');
+        } catch (e) {
+          window.showAppToast('Press Ctrl + V to paste an image', 'info');
+        }
+      };
+
+      $('#ocrSampleBtn').onclick = () => {
+        const c = document.createElement('canvas');
+        c.width = 1400;
+        c.height = 900;
+        const x = c.getContext('2d');
+        x.fillStyle = '#fff';
+        x.fillRect(0, 0, 1400, 900);
+        x.fillStyle = '#172554';
+        x.font = 'bold 52px Georgia, "Times New Roman", serif';
+        x.fillText('The Art of Reading Machines', 90, 130);
+        x.font = '30px Georgia, "Times New Roman", serif';
+        let y = 215;
+        [
+          'Optical character recognition, or OCR, turns pictures of',
+          'printed words into text that you can edit, search and share.',
+          '',
+          'It works with photos of book pages, receipts and street signs,',
+          'with screenshots from your phone or computer, and with',
+          'scanned documents saved as images or PDF files.',
+          '',
+          'Invoice No. 2048     Date: 14 March 2026     Total: Rs. 12,500.00'
+        ].forEach(l => { if (l) x.fillText(l, 90, y); y += l ? 52 : 30; });
+        c.toBlob(b => b && addFiles([new File([b], 'sample-document.png', { type: 'image/png' })]), 'image/png');
+      };
+
+      /* ---------- Rotate, crop, reset ---------- */
+      async function replaceFromCanvas(it, c) {
+        const type = it.blob.type === 'image/jpeg' ? 'image/jpeg' : 'image/png';
+        const blob = await canvasBlob(c, type, 0.95);
+        URL.revokeObjectURL(it.url);
+        it.blob = blob;
+        it.url = URL.createObjectURL(blob);
+        it.w = c.width;
+        it.h = c.height;
+        it.edited = true;
+        if (it.status !== 'ready') it.status = 'ready';
+        renderFiles();
+      }
+
+      async function rotate(dir) {
+        const it = curItem();
+        if (!it || busy) return;
+        try {
+          const img = await loadImage(it.url), c = document.createElement('canvas');
+          c.width = img.naturalHeight;
+          c.height = img.naturalWidth;
+          const x = c.getContext('2d');
+          x.translate(c.width / 2, c.height / 2);
+          x.rotate(dir * Math.PI / 2);
+          x.drawImage(img, -img.naturalWidth / 2, -img.naturalHeight / 2);
+          await replaceFromCanvas(it, c);
+        } catch (e) {
+          window.showAppToast('This image could not be edited', 'error');
+        }
+      }
+      $('#ocrRotL').onclick = () => rotate(-1);
+      $('#ocrRotR').onclick = () => rotate(1);
+      $('#ocrResetBtn').onclick = async () => {
+        const it = curItem();
+        if (!it || busy) return;
+        URL.revokeObjectURL(it.url);
+        it.blob = it.orig;
+        it.url = URL.createObjectURL(it.orig);
+        try { const img = await loadImage(it.url); it.w = img.naturalWidth; it.h = img.naturalHeight; } catch (e) { }
+        it.edited = false;
+        it.status = 'ready';
+        renderFiles();
+      };
+
+      const cropModal = $('#ocrCropModal'), cropStage = $('#ocrCropStage'), cropImg = $('#ocrCropImg'), cropBox = $('#ocrCropBox');
+      let crop = { x: 0, y: 0, w: 1, h: 1 }, drag = null;
+      function layoutCrop() {
+        cropBox.style.left = crop.x * 100 + '%';
+        cropBox.style.top = crop.y * 100 + '%';
+        cropBox.style.width = crop.w * 100 + '%';
+        cropBox.style.height = crop.h * 100 + '%';
+        const it = curItem();
+        if (it) $('#ocrCropDims').textContent = `${Math.max(1, Math.round(crop.w * it.w))} × ${Math.max(1, Math.round(crop.h * it.h))} px`;
+      }
+      $('#ocrCropBtn').onclick = () => {
+        const it = curItem();
+        if (!it || busy) return;
+        cropImg.src = it.url;
+        crop = { x: 0.06, y: 0.06, w: 0.88, h: 0.88 };
+        layoutCrop();
+        cropModal.classList.add('open');
+      };
+      $('#ocrCropCloseBtn').onclick = $('#ocrCropCancelBtn').onclick = () => cropModal.classList.remove('open');
+
+      const cropPos = e => {
+        const r = cropImg.getBoundingClientRect();
+        return [clamp((e.clientX - r.left) / r.width, 0, 1), clamp((e.clientY - r.top) / r.height, 0, 1)];
+      };
+      cropStage.addEventListener('pointerdown', e => {
+        const [px, py] = cropPos(e), h = e.target.dataset.h;
+        if (h) drag = { ax: h.includes('w') ? crop.x + crop.w : crop.x, ay: h.includes('n') ? crop.y + crop.h : crop.y };
+        else if (e.target === cropBox) drag = { move: true, ox: px - crop.x, oy: py - crop.y };
+        else drag = { ax: px, ay: py };
+        cropStage.setPointerCapture(e.pointerId);
+        e.preventDefault();
+      });
+      cropStage.addEventListener('pointermove', e => {
+        if (!drag) return;
+        const [px, py] = cropPos(e);
+        if (drag.move) {
+          crop.x = clamp(px - drag.ox, 0, 1 - crop.w);
+          crop.y = clamp(py - drag.oy, 0, 1 - crop.h);
+        } else {
+          crop.w = Math.max(0.03, Math.abs(px - drag.ax));
+          crop.h = Math.max(0.03, Math.abs(py - drag.ay));
+          crop.x = clamp(Math.min(px, drag.ax), 0, 1 - crop.w);
+          crop.y = clamp(Math.min(py, drag.ay), 0, 1 - crop.h);
+        }
+        layoutCrop();
+      });
+      ['pointerup', 'pointercancel'].forEach(t => cropStage.addEventListener(t, () => drag = null));
+      $('#ocrCropApplyBtn').onclick = async () => {
+        const it = curItem();
+        if (!it) return cropModal.classList.remove('open');
+        try {
+          const img = await loadImage(it.url), nw = img.naturalWidth, nh = img.naturalHeight;
+          const sx = Math.round(crop.x * nw), sy = Math.round(crop.y * nh), sw = Math.max(1, Math.min(nw - sx, Math.round(crop.w * nw))), sh = Math.max(1, Math.min(nh - sy, Math.round(crop.h * nh)));
+          const c = document.createElement('canvas');
+          c.width = sw;
+          c.height = sh;
+          c.getContext('2d').drawImage(img, sx, sy, sw, sh, 0, 0, sw, sh);
+          await replaceFromCanvas(it, c);
+        } catch (e) {
+          window.showAppToast('This image could not be edited', 'error');
+        }
+        cropModal.classList.remove('open');
+      };
+
+      /* ---------- OCR Engine ---------- */
+      function setProgress(p, text) {
+        pct = Math.max(pct, Math.min(100, p));
+        const v = Math.round(pct);
+        pBar.style.width = pct + '%';
+        pPct.textContent = v + '%';
+        if (text) pText.textContent = text;
+      }
+      function setBusy(b) {
+        busy = b;
+        extractBtn.disabled = b;
+        progress.style.display = b ? 'block' : 'none';
+        renderFiles();
+      }
+      async function prepare(it) {
+        const img = await loadImage(it.url), w = img.naturalWidth, h = img.naturalHeight, m = Math.max(w, h);
+        const s = m < 1000 ? 2 : m > 4000 ? 4000 / m : 1, c = document.createElement('canvas');
+        c.width = Math.round(w * s);
+        c.height = Math.round(h * s);
+        const x = c.getContext('2d');
+        x.fillStyle = '#fff';
+        x.fillRect(0, 0, c.width, c.height);
+        x.imageSmoothingQuality = 'high';
+        x.drawImage(img, 0, 0, c.width, c.height);
+        return c;
+      }
+      const cleanText = t => (t || '').replace(/\r/g, '').replace(/[ \t]+\n/g, '\n').replace(/\n{3,}/g, '\n\n').trim();
+      function detectLang(t) {
+        const d = (t.match(/[\u0900-\u097F]/g) || []).length, l = (t.match(/[A-Za-z]/g) || []).length;
+        if (!d && !l) return '';
+        const r = d / (d + l);
+        return r > 0.85 ? 'Hindi' : r < 0.15 ? 'English' : 'Hindi + English';
+      }
+      function upsertDoc(it, text) {
+        const d = docs.find(x => x.id === it.id);
+        if (d) { d.text = text; d.lang = detectLang(text); d.name = it.name; }
+        else docs.push({ id: it.id, name: it.name, text, lang: detectLang(text) });
+        return it.id;
+      }
+
+      const baseName = () => {
+        const d = curDoc();
+        return ((d ? d.name : 'extracted-text').replace(/\.[a-z0-9]{2,5}$/i, '').replace(/[\\/:*?"<>|]+/g, '_').trim() || 'extracted-text');
+      };
+
+      function downloadCurrentTxt(silentEmpty = false) {
+        if (!ed.value.trim()) {
+          if (!silentEmpty) window.showAppToast('Nothing to download yet', 'info');
+          return;
+        }
+        saveBlob(new Blob([ed.value.replace(/\n/g, '\r\n')], { type: 'text/plain;charset=utf-8' }), baseName() + '.txt');
+      }
+
+      async function runOCR() {
+        if (busy) return;
+        let list = items.filter(i => i.status !== 'done');
+        if (!list.length) list = items.slice();
+        if (!list.length) return window.showAppToast('Upload an image or PDF first', 'info');
+        let cancelled = false, rejectCancel, worker = null, idx = 0;
+        const made = [], n = list.length;
+        const cancelP = new Promise((_, r) => rejectCancel = r);
+        cancelP.catch(() => { });
+        cancelFn = () => { cancelled = true; rejectCancel(new Error('cancelled')); };
+        pct = 0;
+        pBar.style.width = '0%';
+        setBusy(true);
+        setProgress(2, 'Loading OCR engine…');
+        try {
+          await Promise.race([loadScript(LIB.tess), cancelP]);
+          const v = ocrLang.value, langs = v === 'eng' ? ['eng'] : v === 'hin' ? ['hin'] : ['eng', 'hin'];
+          const wp = window.Tesseract.createWorker(langs, 1, {
+            logger: m => {
+              if (cancelled) return;
+              if (m.status === 'recognizing text') setProgress(15 + 85 * (idx + (m.progress || 0)) / n, `Recognizing text… ${Math.min(idx + 1, n)}/${n}`);
+              else setProgress(3 + 11 * (m.progress || 0), /lang/.test(m.status || '') ? 'Loading language data…' : 'Loading OCR engine…');
+            }
+          });
+          wp.then(w => { if (cancelled) w.terminate(); }).catch(() => { });
+          worker = await Promise.race([wp, cancelP]);
+          for (const it of list) {
+            if (!items.includes(it)) { idx++; continue; }
+            it.status = 'processing';
+            selectedId = it.id;
+            renderFiles();
+            setProgress(15 + 85 * idx / n, `Recognizing text… ${idx + 1}/${n}`);
+            try {
+              const src = await prepare(it);
+              const res = await Promise.race([worker.recognize(src), cancelP]);
+              it.status = 'done';
+              made.push(upsertDoc(it, cleanText(res.data.text)));
+            } catch (e) {
+              if (cancelled) throw e;
+              console.error(e);
+              it.status = 'error';
+            }
+            idx++;
+            setProgress(15 + 85 * idx / n);
+          }
+        } catch (e) {
+          if (!cancelled) console.error(e);
+          window.showAppToast(cancelled ? 'Extraction cancelled' : 'OCR could not be completed. Check your connection and try again.', cancelled ? 'info' : 'error');
+        } finally {
+          list.forEach(i => { if (i.status === 'processing') i.status = 'ready'; });
+          try { if (worker) worker.terminate(); } catch (e) { }
+          cancelFn = null;
+          setBusy(false);
+        }
+
+        if (made.length) {
+          activeDoc = made[0];
+          const empty = made.every(id => !docs.find(d => d.id === id).text);
+          let msg = empty ? 'No text found in the image' : `Text extracted from ${made.length} file(s)`;
+          if (autoDelete.checked) {
+            items.filter(i => i.status === 'done').forEach(i => removeItem(i.id));
+            msg += ' · Images removed from memory';
+          }
+          renderFiles();
+          renderDocs();
+          window.showAppToast(msg, empty ? 'info' : 'success');
+          editorCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+          // Automatic download after 3 seconds for IMG/PDF to Text
+          if (!empty && ed.value.trim()) {
+            const badge = $('#ocrAutoDlBadge');
+            if (badge) badge.textContent = 'Auto-downloading TXT in 3s…';
+            window.setTimeout(() => {
+              if (badge) badge.textContent = '';
+              downloadCurrentTxt(true);
+            }, 3000);
+          }
+        }
+      }
+      extractBtn.onclick = runOCR;
+      $('#ocrCancelBtn').onclick = () => cancelFn && cancelFn();
+
+      /* ---------- Editor ---------- */
+      function updateStats() {
+        const t = ed.value;
+        $('#ocrSChars').textContent = t.length.toLocaleString();
+        $('#ocrSWords').textContent = (t.trim().match(/\S+/g) || []).length.toLocaleString();
+        $('#ocrSLines').textContent = t ? t.split('\n').length.toLocaleString() : 0;
+      }
+      function renderDocs() {
+        const has = docs.length > 0;
+        editorCard.style.display = has ? 'block' : 'none';
+        if (!has) { activeDoc = null; return; }
+        if (!curDoc()) activeDoc = docs[0].id;
+        const d = curDoc();
+        tabs.style.display = docs.length < 2 ? 'none' : 'flex';
+        tabs.innerHTML = docs.map(x => `<div class="ocr-tab${x.id === activeDoc ? ' on' : ''}"><button type="button" data-doc="${x.id}" title="${esc(x.name)}"><span>${esc(x.name)}</span></button><button type="button" class="ocr-tabx" data-close="${x.id}" title="Close">✕</button></div>`).join('') + `<button type="button" class="ocr-tbtn" style="margin-left:auto;" data-merge>${tr('Merge all')}</button>`;
+        if (ed.value !== d.text) ed.value = d.text;
+        $('#ocrDocName').textContent = d.name;
+        const lb = $('#ocrLangBadge');
+        lb.style.display = d.lang ? 'inline-flex' : 'none';
+        lb.textContent = d.lang ? `${tr('Detected')}: ${tr(d.lang)}` : '';
+        updateStats();
+        refreshFind();
+      }
+      tabs.addEventListener('click', e => {
+        const c = e.target.closest('[data-close]'), t = e.target.closest('[data-doc]');
+        if (e.target.closest('[data-merge]')) {
+          const text = docs.map(d => `===== ${d.name} =====\n${d.text}`).join('\n\n');
+          docs = [{ id: 'm' + (++uid), name: tr('Merged text'), text, lang: detectLang(text) }];
+          activeDoc = docs[0].id;
+          renderDocs();
+        } else if (c) {
+          docs = docs.filter(d => d.id !== c.dataset.close);
+          renderDocs();
+        } else if (t) {
+          activeDoc = t.dataset.doc;
+          renderDocs();
+          ed.scrollTop = 0;
+        }
+      });
+
+      function saveDoc() { const d = curDoc(); if (d) d.text = ed.value; updateStats(); }
+      ed.addEventListener('input', () => { saveDoc(); if (findBar.style.display !== 'none') refreshFind(); });
+      ed.addEventListener('scroll', () => { backdrop.scrollTop = ed.scrollTop; });
+
+      $('#ocrBSelect').onclick = () => { ed.focus(); ed.select(); };
+      $('#ocrBCopy').onclick = async () => {
+        if (!ed.value) return window.showAppToast('Nothing to copy yet', 'info');
+        try { await navigator.clipboard.writeText(ed.value); } catch (e) { ed.focus(); ed.select(); try { document.execCommand('copy'); } catch (_) { } }
+        const l = $('#ocrCopyTxt');
+        l.textContent = tr('Copied!');
+        setTimeout(() => l.textContent = tr('Copy Text'), 1600);
+        window.showAppToast('Copied to clipboard', 'success');
+      };
+      $('#ocrBClear').onclick = () => {
+        const d = curDoc();
+        if (!d || !d.text) return;
+        d.text = '';
+        ed.value = '';
+        updateStats();
+        refreshFind();
+        window.showAppToast('Text cleared', 'info');
+      };
+      function setZoom(v) {
+        fs = clamp(v, 11, 30);
+        editorCard.style.setProperty('--ocr-fs', fs + 'px');
+        $('#ocrZVal').textContent = Math.round(fs / 15 * 100) + '%';
+        paint();
+      }
+      $('#ocrZIn').onclick = () => setZoom(fs + 2);
+      $('#ocrZOut').onclick = () => setZoom(fs - 2);
+
+      /* Find & replace */
+      function getRe() { const q = fQ.value; return q ? new RegExp(q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), fCase.checked ? 'g' : 'gi') : null; }
+      function refreshFind(jump) {
+        matches = [];
+        const re = findBar.style.display !== 'none' && getRe();
+        if (re) { let m; while ((m = re.exec(ed.value))) { matches.push([m.index, m[0].length]); if (!m[0].length) re.lastIndex++; } }
+        mi = matches.length ? clamp(mi < 0 ? 0 : mi, 0, matches.length - 1) : -1;
+        paint();
+        if (jump) scrollToCur();
+      }
+      function paint() {
+        backdrop.style.width = ed.clientWidth + 'px';
+        if (!matches.length) backdrop.innerHTML = '';
+        else {
+          const t = ed.value;
+          let h = '', p = 0;
+          matches.forEach(([s, l], i) => { h += esc(t.slice(p, s)) + `<mark class="hit${i === mi ? ' cur' : ''}">${esc(t.slice(s, s + l))}</mark>`; p = s + l; });
+          backdrop.innerHTML = h + esc(t.slice(p)) + '\n';
+          backdrop.scrollTop = ed.scrollTop;
+        }
+        fCount.textContent = findBar.style.display !== 'none' && fQ.value ? (matches.length ? `${mi + 1} / ${matches.length}` : '0') : '';
+      }
+      function scrollToCur() { const m = backdrop.querySelector('mark.cur'); if (m) { ed.scrollTop = Math.max(0, m.offsetTop - ed.clientHeight / 2 + 20); backdrop.scrollTop = ed.scrollTop; } }
+      function stepFind(d) { if (!matches.length) return; mi = (mi + d + matches.length) % matches.length; paint(); scrollToCur(); }
+      function toggleFind(open) {
+        findBar.style.display = open ? 'grid' : 'none';
+        if (open) {
+          const sel = ed.value.slice(ed.selectionStart, ed.selectionEnd);
+          if (sel && sel.length < 80 && !sel.includes('\n')) fQ.value = sel;
+          mi = -1;
+          refreshFind(true);
+          fQ.focus();
+        } else {
+          matches = [];
+          mi = -1;
+          paint();
+        }
+      }
+      $('#ocrBFind').onclick = () => toggleFind(findBar.style.display === 'none');
+      $('#ocrFClose').onclick = () => toggleFind(false);
+      fQ.addEventListener('input', () => { mi = -1; refreshFind(true); });
+      fCase.onchange = () => { mi = -1; refreshFind(true); };
+      $('#ocrFNext').onclick = () => stepFind(1);
+      $('#ocrFPrev').onclick = () => stepFind(-1);
+      $('#ocrFRep').onclick = () => {
+        if (mi < 0) return;
+        const [s, l] = matches[mi], rep = fR.value;
+        ed.setRangeText(rep, s, s + l, 'end');
+        saveDoc();
+        const pos = s + rep.length;
+        refreshFind();
+        const j = matches.findIndex(m => m[0] >= pos);
+        mi = matches.length ? (j < 0 ? 0 : j) : -1;
+        paint();
+        scrollToCur();
+      };
+      $('#ocrFAll').onclick = () => {
+        const re = getRe();
+        if (!re || !matches.length) return;
+        const n = matches.length, rep = fR.value;
+        ed.value = ed.value.replace(re, () => rep);
+        saveDoc();
+        mi = -1;
+        refreshFind();
+        window.showAppToast(`Replaced ${n} occurrence(s)`, 'success');
+      };
+
+      /* ---------- Downloads (TXT, DOCX, PDF) ---------- */
+      $('#ocrDTxt').onclick = () => downloadCurrentTxt(false);
+
+      const CRCT = (() => {
+        const t = new Uint32Array(256);
+        for (let i = 0; i < 256; i++) {
+          let c = i;
+          for (let k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1;
+          t[i] = c;
+        }
+        return t;
+      })();
+      const crc32 = u => { let c = -1; for (let i = 0; i < u.length; i++) c = CRCT[(c ^ u[i]) & 255] ^ (c >>> 8); return (c ^ -1) >>> 0; };
+      function zipDocx(files, type) {
+        const enc = new TextEncoder(), parts = [], cd = [];
+        let off = 0;
+        files.forEach(([name, str]) => {
+          const n = enc.encode(name), d = enc.encode(str), crc = crc32(d);
+          const lh = new DataView(new ArrayBuffer(30));
+          lh.setUint32(0, 0x04034b50, true); lh.setUint16(4, 20, true); lh.setUint16(6, 0x0800, true); lh.setUint16(12, 33, true); lh.setUint32(14, crc, true); lh.setUint32(18, d.length, true); lh.setUint32(22, d.length, true); lh.setUint16(26, n.length, true);
+          const ch = new DataView(new ArrayBuffer(46));
+          ch.setUint32(0, 0x02014b50, true); ch.setUint16(4, 20, true); ch.setUint16(6, 20, true); ch.setUint16(8, 0x0800, true); ch.setUint16(14, 33, true); ch.setUint32(16, crc, true); ch.setUint32(20, d.length, true); ch.setUint32(24, d.length, true); ch.setUint16(28, n.length, true); ch.setUint32(42, off, true);
+          parts.push(lh.buffer, n, d);
+          cd.push(ch.buffer, n);
+          off += 30 + n.length + d.length;
+        });
+        const cdSize = cd.reduce((a, b) => a + b.byteLength, 0), e = new DataView(new ArrayBuffer(22));
+        e.setUint32(0, 0x06054b50, true); e.setUint16(8, files.length, true); e.setUint16(10, files.length, true); e.setUint32(12, cdSize, true); e.setUint32(16, off, true);
+        return new Blob([...parts, ...cd, e.buffer], { type });
+      }
+      $('#ocrDDocx').onclick = () => {
+        if (!ed.value.trim()) return window.showAppToast('Nothing to download yet', 'info');
+        const xe = s => s.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\uFFFE\uFFFF]/g, '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        const H = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>';
+        const body = ed.value.split('\n').map(l => `<w:p><w:r><w:rPr><w:sz w:val="24"/><w:szCs w:val="24"/></w:rPr><w:t xml:space="preserve">${xe(l)}</w:t></w:r></w:p>`).join('');
+        saveBlob(zipDocx([
+          ['[Content_Types].xml', H + '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/></Types>'],
+          ['_rels/.rels', H + '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/></Relationships>'],
+          ['word/document.xml', H + '<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:body>' + body + '<w:sectPr><w:pgSz w:w="11906" w:h="16838"/><w:pgMar w:top="1440" w:right="1440" w:bottom="1440" w:left="1440" w:header="708" w:footer="708" w:gutter="0"/></w:sectPr></w:body></w:document>']
+        ], 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'), baseName() + '.docx');
+      };
+
+      function wrapLines(ctx, text, maxW) {
+        const out = [];
+        text.split('\n').forEach(par => {
+          if (!par.trim()) { out.push(''); return; }
+          let line = '';
+          par.split(/(\s+)/).forEach(tok => {
+            if (ctx.measureText(line + tok).width <= maxW) { line += tok; return; }
+            if (line.trim()) out.push(line.replace(/\s+$/, ''));
+            tok = tok.replace(/^\s+/, '');
+            while (tok && ctx.measureText(tok).width > maxW) {
+              let i = tok.length;
+              while (i > 1 && ctx.measureText(tok.slice(0, i)).width > maxW) i--;
+              out.push(tok.slice(0, i));
+              tok = tok.slice(i);
+            }
+            line = tok;
+          });
+          out.push(line.replace(/\s+$/, ''));
+        });
+        return out;
+      }
+
+      $('#ocrDPdf').onclick = async () => {
+        if (!ed.value.trim()) return window.showAppToast('Nothing to download yet', 'info');
+        const btn = $('#ocrDPdf');
+        btn.disabled = true;
+        try {
+          await loadScript(LIB.jspdf);
+          const pdf = new window.jspdf.jsPDF({ unit: 'pt', format: 'a4' }), W = pdf.internal.pageSize.getWidth(), H = pdf.internal.pageSize.getHeight(), M = 56, text = ed.value.replace(/\t/g, '    ');
+          if (/^[\n\r\x20-\x7E\xA0-\xFF]*$/.test(text)) {
+            pdf.setFont('helvetica', 'normal');
+            pdf.setFontSize(11.5);
+            let y = M + 8;
+            pdf.splitTextToSize(text, W - 2 * M).forEach(l => { if (y > H - M) { pdf.addPage(); y = M + 8; } pdf.text(l, M, y); y += 17; });
+          } else {
+            const S = 2.2, c = document.createElement('canvas');
+            c.width = Math.round(W * S);
+            c.height = Math.round(H * S);
+            const x = c.getContext('2d'), font = `${12 * S}px Inter, Arial, sans-serif`, lh = 19 * S, m = M * S;
+            x.font = font;
+            const lines = wrapLines(x, text, c.width - 2 * m), per = Math.floor((c.height - 2 * m) / lh);
+            for (let p = 0; p * per < lines.length; p++) {
+              if (p) pdf.addPage();
+              x.fillStyle = '#fff';
+              x.fillRect(0, 0, c.width, c.height);
+              x.fillStyle = '#172554';
+              x.font = font;
+              x.textBaseline = 'top';
+              lines.slice(p * per, (p + 1) * per).forEach((l, i) => x.fillText(l, m, m + i * lh));
+              pdf.addImage(c.toDataURL('image/jpeg', 0.9), 'JPEG', 0, 0, W, H);
+            }
+          }
+          const name = baseName() + '.pdf';
+          pdf.save(name);
+          window.showAppToast(`Downloaded ${name}`, 'success');
+        } catch (e) {
+          console.error(e);
+          window.showAppToast('The file could not be created. Check your connection and try again.', 'error');
+        }
+        btn.disabled = false;
+      };
+    })();
+  </script>
+
 </body>
 </html>
