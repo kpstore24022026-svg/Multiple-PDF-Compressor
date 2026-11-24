@@ -4116,7 +4116,12 @@
               <p id="ocrDocName" style="margin:2px 0 0; font-size:12px; color:var(--text-secondary);"></p>
             </div>
           </div>
-          <span id="ocrLangBadge" class="ocr-badge" style="display:none;"></span>
+          <div style="display:flex; align-items:center; gap:8px;">
+            <span id="ocrLangBadge" class="ocr-badge" style="display:none;"></span>
+            <button type="button" id="ocrClearAllDocsBtn" class="ocr-btn ocr-btn-danger" style="padding:6px 12px; font-size:12px;" title="Delete all extracted text files">
+              <i data-lucide="trash-2" style="width:14px;height:14px;"></i> <span id="ocrClearAllDocsTxt">Clear All Files</span>
+            </button>
+          </div>
         </div>
 
         <div id="ocrTabs" class="ocr-tabs" role="tablist" style="display:none;"></div>
@@ -10522,6 +10527,7 @@
         'Uploaded files': 'अपलोड की गई फ़ाइलें',
         'Add more': 'और जोड़ें',
         'Clear all': 'सभी हटाएँ',
+        'Clear All Files': 'सभी फ़ाइलें हटाएँ',
         'Text language': 'टेक्स्ट की भाषा',
         'Auto-delete images after processing': 'प्रोसेसिंग के बाद इमेज अपने-आप हटाएँ',
         'Extract Text': 'टेक्स्ट निकालें',
@@ -10599,6 +10605,7 @@
         $('#ocrUploadedLabel').textContent = tr('Uploaded files');
         $('#ocrAddMoreTxt').textContent = tr('Add more');
         $('#ocrClearAllTxt').textContent = tr('Clear all');
+        if ($('#ocrClearAllDocsTxt')) $('#ocrClearAllDocsTxt').textContent = tr('Clear All Files');
         $('#ocrLangLabel').textContent = tr('Text language');
         $('#ocrAutoDelLabel').textContent = tr('Auto-delete images after processing');
         $('#ocrExtractTxt').textContent = tr('Extract Text');
@@ -11118,6 +11125,20 @@
         updateStats();
         refreshFind();
         window.showAppToast('Text cleared', 'info');
+      };
+
+      $('#ocrClearAllDocsBtn').onclick = () => {
+        if (!docs.length) return;
+        docs = [];
+        activeDoc = null;
+        ed.value = '';
+        matches = [];
+        mi = -1;
+        paint();
+        toggleFind(false);
+        updateStats();
+        renderDocs();
+        window.showAppToast(uiLang === 'hi' ? 'सभी निकाली गई फ़ाइलें हटा दी गईं' : 'All extracted text files deleted', 'info');
       };
       function setZoom(v) {
         fs = clamp(v, 11, 30);
