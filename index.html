@@ -3680,21 +3680,12 @@
 
         <span class="tool-switcher-sep" aria-hidden="true"></span>
 
-        <button class="tool-tab" id="tabEditPdf" type="button" role="tab" aria-selected="false" data-tool="editPdf">
+        <button class="tool-tab" id="tabEditStudio" type="button" role="tab" aria-selected="false" data-tool="editStudio">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M12 20h9"/>
             <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/>
           </svg>
-          <span>Edit PDF</span>
-        </button>
-        <button class="tool-tab" id="tabEditImg" type="button" role="tab" aria-selected="false" data-tool="editImg">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="m15 5 4 4"/>
-            <path d="M13 7 8.7 2.7a2.41 2.41 0 0 0-3.4 0L2.7 5.3a2.41 2.41 0 0 0 0 3.4L7 13"/>
-            <path d="m8 6 2-2"/>
-            <path d="m2 22 5.5-1.5L21.17 6.83a2.82 2.82 0 0 0-4-4L3.5 16.5Z"/>
-          </svg>
-          <span>Edit IMG</span>
+          <span>Edit PDF/IMG</span>
         </button>
       </nav>
     </div>
@@ -4282,9 +4273,9 @@
       <div class="studio-spacer"></div>
       <div class="studio-divider"></div>
 
-      <input type="file" id="peFileInput" accept="application/pdf,.pdf" hidden />
-      <button class="ed-btn ed-btn-primary" onclick="document.getElementById('peFileInput').click()" title="Open PDF File">
-        <i data-lucide="folder-open" style="width:14px;height:14px;"></i> Open PDF
+      <input type="file" id="peFileInput" accept="application/pdf,.pdf,image/*" hidden />
+      <button class="ed-btn ed-btn-primary" onclick="document.getElementById('peFileInput').click()" title="Open PDF or Image File">
+        <i data-lucide="folder-open" style="width:14px;height:14px;"></i> Open File
       </button>
       <button class="ed-btn ed-btn-success" onclick="peExportEditedPDF()" title="Save Edited PDF">
         <i data-lucide="download" style="width:14px;height:14px;"></i> Save PDF
@@ -4414,16 +4405,16 @@
           <div class="studio-empty-icon">
             <i data-lucide="file-up" style="width:28px;height:28px;"></i>
           </div>
-          <h3 style="margin:0 0 8px 0;font-size:20px;color:var(--text-main);">Open, Drag & Drop, or Paste PDF</h3>
+          <h3 style="margin:0 0 8px 0;font-size:20px;color:var(--text-main);">Open, Drag & Drop, or Paste PDF / Image</h3>
           <p style="margin:0 0 18px 0;font-size:13px;color:var(--text-secondary);line-height:1.55;">
-            Edit existing PDF text, add new text, sign documents, highlight, crop pages, or insert images locally in your browser.
+            Edit PDF text, enhance & crop images, add text, sign with transparent BG removal, highlight, or draw shapes locally in one unified studio.
           </p>
           <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
             <button class="ed-btn ed-btn-primary" style="padding:10px 18px;font-size:13px;" onclick="document.getElementById('peFileInput').click()">
-              <i data-lucide="folder-open" style="width:15px;height:15px;"></i> Select PDF
+              <i data-lucide="folder-open" style="width:15px;height:15px;"></i> Select PDF / IMG
             </button>
-            <button class="ed-btn" style="padding:10px 16px;font-size:13px;" onclick="pePasteFromClipboard()">
-              <i data-lucide="clipboard-paste" style="width:15px;height:15px;"></i> Paste PDF
+            <button class="ed-btn" style="padding:10px 16px;font-size:13px;" onclick="studioPasteUnified()">
+              <i data-lucide="clipboard-paste" style="width:15px;height:15px;"></i> Paste PDF / IMG
             </button>
           </div>
         </div>
@@ -4495,9 +4486,9 @@
       <div class="studio-spacer"></div>
       <div class="studio-divider"></div>
 
-      <input type="file" id="ieFileInput" accept="image/*" hidden />
-      <button class="ed-btn ed-btn-primary" onclick="document.getElementById('ieFileInput').click()" title="Open Image File">
-        <i data-lucide="folder-open" style="width:14px;height:14px;"></i> Open Image
+      <input type="file" id="ieFileInput" accept="application/pdf,.pdf,image/*" hidden />
+      <button class="ed-btn ed-btn-primary" onclick="document.getElementById('ieFileInput').click()" title="Open PDF or Image File">
+        <i data-lucide="folder-open" style="width:14px;height:14px;"></i> Open File
       </button>
       <button class="ed-btn ed-btn-success" onclick="ieExportEditedImage()" title="Save Edited Image">
         <i data-lucide="download" style="width:14px;height:14px;"></i> Save Image
@@ -4667,16 +4658,16 @@
           <div class="studio-empty-icon">
             <i data-lucide="image-up" style="width:28px;height:28px;"></i>
           </div>
-          <h3 style="margin:0 0 8px 0;font-size:20px;color:var(--text-main);">Open, Drag & Drop, or Paste Image</h3>
+          <h3 style="margin:0 0 8px 0;font-size:20px;color:var(--text-main);">Open, Drag & Drop, or Paste PDF / Image</h3>
           <p style="margin:0 0 18px 0;font-size:13px;color:var(--text-secondary);line-height:1.55;">
-            Auto-enhance photos, 4-way crop, rotate by 1° or 90°, draw shapes, add text, or sign with transparent background removal.
+            Edit PDF text, enhance & crop images, add text, sign with transparent BG removal, highlight, or draw shapes locally in one unified studio.
           </p>
           <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
             <button class="ed-btn ed-btn-primary" style="padding:10px 18px;font-size:13px;" onclick="document.getElementById('ieFileInput').click()">
-              <i data-lucide="folder-open" style="width:15px;height:15px;"></i> Select Image
+              <i data-lucide="folder-open" style="width:15px;height:15px;"></i> Select PDF / IMG
             </button>
-            <button class="ed-btn" style="padding:10px 16px;font-size:13px;" onclick="iePasteFromClipboard()">
-              <i data-lucide="clipboard-paste" style="width:15px;height:15px;"></i> Paste Image
+            <button class="ed-btn" style="padding:10px 16px;font-size:13px;" onclick="studioPasteUnified()">
+              <i data-lucide="clipboard-paste" style="width:15px;height:15px;"></i> Paste PDF / IMG
             </button>
           </div>
         </div>
@@ -4900,8 +4891,7 @@
       const tabImgToPdf = document.getElementById("tabImgToPdf");
       const tabPdfToImg = document.getElementById("tabPdfToImg");
       const tabOcr = document.getElementById("tabOcr");
-      const tabEditPdf = document.getElementById("tabEditPdf");
-      const tabEditImg = document.getElementById("tabEditImg");
+      const tabEditStudio = document.getElementById("tabEditStudio");
 
       const brandMarkIcon = document.getElementById("brandMarkIcon");
       const brandNameText = document.getElementById("brandNameText");
@@ -5148,19 +5138,34 @@
           [tabImgToPdf, "img2pdf"],
           [tabPdfToImg, "pdf2img"],
           [tabOcr, "ocr"],
-          [tabEditPdf, "editPdf"],
-          [tabEditImg, "editImg"]
+          [tabEditStudio, "editStudio"]
         ].forEach(([el, key]) => {
+          if (!el) return;
           const isAct = tool === key;
           el.classList.toggle("active", isAct);
           el.setAttribute("aria-selected", isAct);
         });
 
-        // Toggle between Batch Shell, OCR View, and Studio Editors
+        // Toggle between Batch Shell, OCR View, and Unified Studio Editor
+        const isStudio = (tool === "editStudio" || tool === "editPdf" || tool === "editImg");
+        if (isStudio && tabEditStudio) {
+          tabEditStudio.classList.add("active");
+          tabEditStudio.setAttribute("aria-selected", "true");
+        }
         batchAppShell.classList.toggle("hidden", !isBatchTool(tool));
         ocrWorkspaceView.classList.toggle("active", tool === "ocr");
-        pdfEditorView.classList.toggle("active", tool === "editPdf");
-        imgEditorView.classList.toggle("active", tool === "editImg");
+        if (!isStudio) {
+          pdfEditorView.classList.remove("active");
+          imgEditorView.classList.remove("active");
+        } else {
+          if (window.studioCurrentMedia === "img") {
+            pdfEditorView.classList.remove("active");
+            imgEditorView.classList.add("active");
+          } else {
+            imgEditorView.classList.remove("active");
+            pdfEditorView.classList.add("active");
+          }
+        }
 
         if (tool === "ocr") {
           document.title = "IMG/PDF to Text — Free Hindi & English OCR";
@@ -5170,19 +5175,15 @@
           return;
         }
 
-        if (tool === "editPdf") {
-          document.title = "EditPDF — Interactive PDF Editor Studio";
+        if (tool === "editStudio" || tool === "editPdf" || tool === "editImg") {
+          document.title = "Edit PDF/IMG — Interactive Document & Image Studio";
           brandMarkIcon.innerHTML = sharedIcons.brandEditPdf;
-          brandNameText.innerHTML = `Edit<span>PDF</span>`;
-          if (window.peOnTabActivated) window.peOnTabActivated();
-          return;
-        }
-
-        if (tool === "editImg") {
-          document.title = "EditIMG — Interactive Image Editor Studio";
-          brandMarkIcon.innerHTML = sharedIcons.brandEditImg;
-          brandNameText.innerHTML = `Edit<span>IMG</span>`;
-          if (window.ieOnTabActivated) window.ieOnTabActivated();
+          brandNameText.innerHTML = `Edit<span>PDF/IMG</span>`;
+          if (window.studioCurrentMedia === "img") {
+            if (window.ieOnTabActivated) window.ieOnTabActivated();
+          } else {
+            if (window.peOnTabActivated) window.peOnTabActivated();
+          }
           return;
         }
 
@@ -5359,8 +5360,7 @@
       tabImgToPdf.addEventListener("click", () => switchTool("img2pdf"));
       tabPdfToImg.addEventListener("click", () => switchTool("pdf2img"));
       tabOcr.addEventListener("click", () => switchTool("ocr"));
-      tabEditPdf.addEventListener("click", () => switchTool("editPdf"));
-      tabEditImg.addEventListener("click", () => switchTool("editImg"));
+      tabEditStudio.addEventListener("click", () => switchTool("editStudio"));
       [downloadAllButton, ...document.querySelectorAll(".download-single")].forEach(btn => {
         if (btn) btn.addEventListener("click", () => { clearTimeout(autoDownloadTimer); autoDownloadTimer = null; });
       });
@@ -5372,8 +5372,9 @@
       }, true);
       // Restore the last selected tool when the page is refreshed.
       const savedTool = location.hash.replace(/^#tool=/, "");
-      if (["pdf","img","img2pdf","pdf2img","ocr","editPdf","editImg"].includes(savedTool)) {
-        const savedTab = document.querySelector(`.tool-tab[data-tool="${savedTool}"]`);
+      const mappedTool = (savedTool === "editPdf" || savedTool === "editImg") ? "editStudio" : savedTool;
+      if (["pdf","img","img2pdf","pdf2img","ocr","editStudio"].includes(mappedTool)) {
+        const savedTab = document.querySelector(`.tool-tab[data-tool="${mappedTool}"]`);
         if (savedTab) savedTab.click();
       }
 
@@ -5927,11 +5928,16 @@
         outputPdf.setCreator("CompressPDF");
         outputPdf.setCreationDate(new Date());
 
-        const result = await outputPdf.save({
-          useObjectStreams: true,
+        const rawResult = await outputPdf.save({
+          useObjectStreams: false,
           addDefaultPage: false,
           objectsPerTick: 40
         });
+        // Ensure PDF-1.4 header compatibility for strict government portals like GeM
+        const result = new Uint8Array(rawResult);
+        if (result.length > 8 && result[0] === 0x25 && result[1] === 0x50 && result[2] === 0x44 && result[3] === 0x46 && result[5] === 0x31 && result[6] === 0x2E && result[7] === 0x37) {
+          result[7] = 0x34; // %PDF-1.4
+        }
 
         await sourcePdf.destroy();
         return result;
@@ -6303,7 +6309,12 @@
           });
         }
 
-        return await pdfDoc.save({ useObjectStreams: true });
+        const rawBytes = await pdfDoc.save({ useObjectStreams: false });
+        const compatBytes = new Uint8Array(rawBytes);
+        if (compatBytes.length > 8 && compatBytes[0] === 0x25 && compatBytes[1] === 0x50 && compatBytes[2] === 0x44 && compatBytes[3] === 0x46 && compatBytes[5] === 0x31 && compatBytes[6] === 0x2E && compatBytes[7] === 0x37) {
+          compatBytes[7] = 0x34; // %PDF-1.4
+        }
+        return compatBytes;
       }
 
       async function convertSingleImageToPdf(item, index, total) {
@@ -8953,7 +8964,11 @@
         }
       }
 
-      const modifiedBytes = await doc.save();
+      const rawModBytes = await doc.save({ useObjectStreams: false });
+      const modifiedBytes = new Uint8Array(rawModBytes);
+      if (modifiedBytes.length > 8 && modifiedBytes[0] === 0x25 && modifiedBytes[1] === 0x50 && modifiedBytes[2] === 0x44 && modifiedBytes[3] === 0x46 && modifiedBytes[5] === 0x31 && modifiedBytes[6] === 0x2E && modifiedBytes[7] === 0x37) {
+        modifiedBytes[7] = 0x34;
+      }
       const blob = new Blob([modifiedBytes], { type: 'application/pdf' });
       const link = document.createElement('a');
       link.href = URL.createObjectURL(blob);
@@ -12028,5 +12043,115 @@
 })();
 </script>
 
+
+<script>
+/* Unified Edit PDF/IMG Router & Seamless Media Switcher */
+(function () {
+  "use strict";
+  window.studioCurrentMedia = "pdf"; // "pdf" | "img"
+
+  function activateStudioMode(media) {
+    window.studioCurrentMedia = media;
+    const pdfView = document.getElementById("pdfEditorView");
+    const imgView = document.getElementById("imgEditorView");
+    if (!pdfView || !imgView) return;
+    if (media === "img") {
+      pdfView.classList.remove("active");
+      imgView.classList.add("active");
+    } else {
+      imgView.classList.remove("active");
+      pdfView.classList.add("active");
+    }
+    if (window.lucide) lucide.createIcons();
+  }
+
+  // Override peHandleIncomingFile so opening/dropping an Image when no PDF is open automatically opens it in Image Studio mode!
+  const origPeIncoming = window.peHandleIncomingFile;
+  window.peHandleIncomingFile = async function (file) {
+    if (!file) return;
+    const isPdf = file.type === "application/pdf" || /\.pdf$/i.test(file.name);
+    const isImg = file.type.startsWith("image/") || /\.(jpe?g|png|webp|bmp|gif)$/i.test(file.name);
+
+    if (isPdf) {
+      activateStudioMode("pdf");
+      await origPeIncoming(file);
+    } else if (isImg) {
+      activateStudioMode("img");
+      await window.ieHandleIncomingFile(file);
+    } else {
+      window.showAppToast("Please select a valid PDF or Image file.", "error");
+    }
+  };
+
+  // Override ieHandleIncomingFile so opening/dropping a PDF automatically switches to PDF Studio mode!
+  const origIeIncoming = window.ieHandleIncomingFile;
+  window.ieHandleIncomingFile = async function (file) {
+    if (!file) return;
+    const isPdf = file.type === "application/pdf" || /\.pdf$/i.test(file.name);
+    const isImg = file.type.startsWith("image/") || /\.(jpe?g|png|webp|bmp|gif)$/i.test(file.name);
+
+    if (isPdf) {
+      activateStudioMode("pdf");
+      await origPeIncoming(file);
+    } else if (isImg) {
+      activateStudioMode("img");
+      await origIeIncoming(file);
+    } else {
+      window.showAppToast("Please select a valid PDF or Image file.", "error");
+    }
+  };
+
+  // Unified Clipboard Paste (Ctrl+V or Paste Button)
+  window.studioPasteUnified = async function () {
+    if (!navigator.clipboard || !navigator.clipboard.read) {
+      window.showAppToast("Press Ctrl+V to paste a PDF or Image.", "info");
+      return;
+    }
+    try {
+      const clipboardItems = await navigator.clipboard.read();
+      for (const clipItem of clipboardItems) {
+        for (const type of clipItem.types) {
+          if (type === "application/pdf" || type.startsWith("image/")) {
+            const blob = await clipItem.getType(type);
+            const ext = type === "application/pdf" ? "pasted.pdf" : "pasted.png";
+            const file = new File([blob], ext, { type });
+            await window.peHandleIncomingFile(file);
+            return;
+          }
+        }
+      }
+      window.showAppToast("No PDF or Image found in clipboard. Press Ctrl+V.", "info");
+    } catch (err) {
+      window.showAppToast("Use Ctrl+V on your keyboard to paste a copied PDF or Image.", "info");
+    }
+  };
+
+  // Update global paste listener to work cleanly for editStudio
+  window.addEventListener("paste", async (e) => {
+    if (window.activeAppTool !== "editStudio") return;
+    if (document.activeElement && document.activeElement.isContentEditable) return;
+    const items = e.clipboardData?.items;
+    if (!items) return;
+    for (const item of items) {
+      if (item.kind === "file") {
+        const file = item.getAsFile();
+        if (file) {
+          e.preventDefault();
+          await window.peHandleIncomingFile(file);
+          return;
+        }
+      }
+    }
+  });
+
+  // When Clear Workspace is clicked in either mode, return to the unified Edit PDF/IMG landing screen
+  const origIeClear = window.ieClearWorkspace;
+  window.ieClearWorkspace = function () {
+    origIeClear();
+    activateStudioMode("pdf");
+  };
+})();
+</script>
 </body>
+
 </html>
