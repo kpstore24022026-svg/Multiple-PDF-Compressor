@@ -4272,8 +4272,11 @@
       <button class="ed-btn" onclick="peChangeZoom(0.15)" title="Zoom In">
         <i data-lucide="plus" style="width:14px;height:14px;"></i>
       </button>
-      <button class="ed-btn" onclick="peFitPdfToPage(true)" title="Fit to Page">
-        <i data-lucide="maximize-2" style="width:13px;height:13px;"></i> Fit to Page
+      <button class="ed-btn" id="peFitToggleBtn" onclick="peToggleFitMode()" title="Toggle Fit to Page / Fit to Width">
+        <i data-lucide="maximize-2" style="width:13px;height:13px;"></i> <span>Fit to Page</span>
+      </button>
+      <button class="ed-btn" onclick="peClearWorkspace()" title="Clear PDF workspace">
+        <i data-lucide="eraser" style="width:13px;height:13px;"></i> Clear Workspace
       </button>
 
       <div class="studio-spacer"></div>
@@ -4332,17 +4335,15 @@
         </button>
       </div>
       <div class="tool-wrapper">
-        <button class="ed-tool-btn" data-tool="highlight" onclick="peToggleToolDropdown('peHighlightDropdown', 'highlight', this, event)">
+        <button class="ed-tool-btn" data-tool="highlight" onclick="peSetTool('highlight')">
           <i data-lucide="highlighter"></i>
           <span>Highlight</span>
-          <i data-lucide="chevron-right" class="dropdown-caret"></i>
         </button>
       </div>
       <div class="tool-wrapper">
-        <button class="ed-tool-btn" data-tool="shapes" onclick="peToggleToolDropdown('peShapesDropdown', 'shapes', this, event)">
+        <button class="ed-tool-btn" data-tool="shapes" onclick="peSetTool('shapes')">
           <i data-lucide="shapes"></i>
           <span>Shapes</span>
-          <i data-lucide="chevron-right" class="dropdown-caret"></i>
         </button>
       </div>
       <div class="tool-wrapper">
@@ -4484,8 +4485,11 @@
       <button class="ed-btn" onclick="ieChangeZoom(0.15)" title="Zoom In">
         <i data-lucide="plus" style="width:14px;height:14px;"></i>
       </button>
-      <button class="ed-btn" onclick="ieFitImageToScreen(true)" title="Fit Image to Screen">
-        <i data-lucide="maximize-2" style="width:13px;height:13px;"></i> Fit
+      <button class="ed-btn" id="ieFitToggleBtn" onclick="ieToggleFitMode()" title="Toggle Fit to Page / Fit to Width">
+        <i data-lucide="maximize-2" style="width:13px;height:13px;"></i> <span>Fit to Page</span>
+      </button>
+      <button class="ed-btn" onclick="ieClearWorkspace()" title="Clear image workspace">
+        <i data-lucide="eraser" style="width:13px;height:13px;"></i> Clear Workspace
       </button>
 
       <div class="studio-spacer"></div>
@@ -4545,17 +4549,15 @@
         </button>
       </div>
       <div class="tool-wrapper">
-        <button class="ed-tool-btn" data-tool="highlight" onclick="ieToggleToolDropdown('ieHighlightDropdown', 'highlight', this, event)">
+        <button class="ed-tool-btn" data-tool="highlight" onclick="ieSetTool('highlight')">
           <i data-lucide="highlighter"></i>
           <span>Highlight</span>
-          <i data-lucide="chevron-right" class="dropdown-caret"></i>
         </button>
       </div>
       <div class="tool-wrapper">
-        <button class="ed-tool-btn" data-tool="shapes" onclick="ieToggleToolDropdown('ieShapesDropdown', 'shapes', this, event)">
+        <button class="ed-tool-btn" data-tool="shapes" onclick="ieSetTool('shapes')">
           <i data-lucide="shapes"></i>
           <span>Shapes</span>
-          <i data-lucide="chevron-right" class="dropdown-caret"></i>
         </button>
       </div>
       <div class="tool-wrapper">
@@ -4911,6 +4913,8 @@
       let isProcessing = false;
 
       brandRefreshBtn.addEventListener("click", () => {
+        const curTool = window.activeAppTool || location.hash.replace(/^#tool=/, "") || "pdf";
+        location.hash = "tool=" + curTool;
         window.location.reload();
       });
 
@@ -5092,6 +5096,7 @@
 
       let loadedFiles = [];
       let processedResults = [];
+      let autoDownloadTimer = null;
       let selectedUnit = "KB";
       let selectedPageFit = "fit";
       let selectedImgFormat = "jpg";
@@ -5134,6 +5139,7 @@
         if (isProcessing || activeTool === tool) return;
         activeTool = tool;
         window.activeAppTool = tool;
+        if (location.hash !== "#tool=" + tool) history.replaceState(null, "", "#tool=" + tool);
 
         // Update Top Navigation Tab States
         [
@@ -5355,6 +5361,21 @@
       tabOcr.addEventListener("click", () => switchTool("ocr"));
       tabEditPdf.addEventListener("click", () => switchTool("editPdf"));
       tabEditImg.addEventListener("click", () => switchTool("editImg"));
+      [downloadAllButton, ...document.querySelectorAll(".download-single")].forEach(btn => {
+        if (btn) btn.addEventListener("click", () => { clearTimeout(autoDownloadTimer); autoDownloadTimer = null; });
+      });
+      document.addEventListener("click", (event) => {
+        if (event.target.closest("#downloadAllButton, .download-single")) {
+          clearTimeout(autoDownloadTimer);
+          autoDownloadTimer = null;
+        }
+      }, true);
+      // Restore the last selected tool when the page is refreshed.
+      const savedTool = location.hash.replace(/^#tool=/, "");
+      if (["pdf","img","img2pdf","pdf2img","ocr","editPdf","editImg"].includes(savedTool)) {
+        const savedTab = document.querySelector(`.tool-tab[data-tool="${savedTool}"]`);
+        if (savedTab) savedTab.click();
+      }
 
       document.querySelectorAll(".page-pill:not(.format-pill)").forEach(btn => {
         btn.addEventListener("click", () => {
@@ -6537,10 +6558,12 @@
         // Automatic download after 3 seconds for all batch tools (Compress PDF, Resize IMG, IMG to PDF, PDF to IMG)
         if (processedResults.length > 0) {
           showToast("Auto-downloading in 3 seconds…", "info");
-          window.setTimeout(() => {
+          clearTimeout(autoDownloadTimer);
+          autoDownloadTimer = window.setTimeout(() => {
             if (processedResults.length > 0 && isBatchTool(activeTool)) {
               downloadAllResults();
             }
+            autoDownloadTimer = null;
           }, 3000);
         }
       }
@@ -7416,6 +7439,8 @@
 
     async function peRenderAllPages() {
       if (!pePdfDoc) return;
+      const __keepScrollTop = peWorkspace.scrollTop;
+      const __keepScrollLeft = peWorkspace.scrollLeft;
       pePagesContainer.innerHTML = '';
 
       for (let pNum = 1; pNum <= peTotalPages; pNum++) {
@@ -7503,6 +7528,10 @@
       peUpdateUIState();
       peApplyToolModeToAllPages();
       peRenderAllOverlays();
+      requestAnimationFrame(() => {
+        peWorkspace.scrollTop = __keepScrollTop;
+        peWorkspace.scrollLeft = __keepScrollLeft;
+      });
     }
 
     function peApplyEnhanceFilterToCanvas(ctx, w, h) {
@@ -10558,6 +10587,7 @@
         fR = $('#ocrFR'), fCase = $('#ocrFCase'), fCount = $('#ocrFCount');
 
       let items = [], selectedId = null, docs = [], activeDoc = null, busy = false, cancelFn = null, uid = 0, pct = 0, fs = 15, matches = [], mi = -1;
+      let ocrAutoDownloadTimer = null;
       const curItem = () => items.find(i => i.id === selectedId);
       const curDoc = () => docs.find(d => d.id === activeDoc);
 
@@ -11054,9 +11084,11 @@
           if (!empty && ed.value.trim()) {
             const badge = $('#ocrAutoDlBadge');
             if (badge) badge.textContent = 'Auto-downloading TXT in 3s…';
-            window.setTimeout(() => {
+            clearTimeout(ocrAutoDownloadTimer);
+            ocrAutoDownloadTimer = window.setTimeout(() => {
               if (badge) badge.textContent = '';
               downloadCurrentTxt(true);
+              ocrAutoDownloadTimer = null;
             }, 3000);
           }
         }
@@ -11217,7 +11249,12 @@
       };
 
       /* ---------- Downloads (TXT, DOCX, PDF) ---------- */
-      $('#ocrDTxt').onclick = () => downloadCurrentTxt(false);
+      $('#ocrDTxt').onclick = () => {
+        clearTimeout(ocrAutoDownloadTimer);
+        ocrAutoDownloadTimer = null;
+        const badge = $('#ocrAutoDlBadge'); if (badge) badge.textContent = '';
+        downloadCurrentTxt(false);
+      };
 
       const CRCT = (() => {
         const t = new Uint32Array(256);
@@ -11321,6 +11358,675 @@
       };
     })();
   </script>
+
+
+<script>
+/* FileEase Complete Studio & UX Enhancements */
+(function () {
+  "use strict";
+  const $ = (id) => document.getElementById(id);
+  const icon = (name, size = 13) => `<i data-lucide="${name}" style="width:${size}px;height:${size}px;"></i>`;
+
+  // Inject CSS for 4-way resize handles, top shape rotation handle, and active toggle buttons
+  const styleEl = document.createElement("style");
+  styleEl.textContent = `
+    .studio-top-bar .ed-btn.active {
+      background: var(--primary-light);
+      border-color: var(--primary);
+      color: var(--primary);
+    }
+    .editor-item .resize-handle.rh-4way {
+      display: none;
+      position: absolute;
+      background: var(--primary);
+      border: 2px solid #ffffff;
+      box-shadow: 0 2px 5px rgba(23, 37, 84, 0.28);
+      z-index: 60;
+      touch-action: none;
+    }
+    .editor-item.selected .resize-handle.rh-4way {
+      display: block;
+    }
+    .rh-nw { top: -6px; left: -6px; width: 12px; height: 12px; border-radius: 50%; cursor: nwse-resize; }
+    .rh-ne { top: -6px; right: -6px; width: 12px; height: 12px; border-radius: 50%; cursor: nesw-resize; }
+    .rh-sw { bottom: -6px; left: -6px; width: 12px; height: 12px; border-radius: 50%; cursor: nesw-resize; }
+    .rh-se { bottom: -6px; right: -6px; width: 12px; height: 12px; border-radius: 50%; cursor: nwse-resize; }
+    .rh-n  { top: -5px; left: 50%; transform: translateX(-50%); width: 20px; height: 8px; border-radius: 4px; cursor: ns-resize; }
+    .rh-s  { bottom: -5px; left: 50%; transform: translateX(-50%); width: 20px; height: 8px; border-radius: 4px; cursor: ns-resize; }
+    .rh-w  { left: -5px; top: 50%; transform: translateY(-50%); width: 8px; height: 20px; border-radius: 4px; cursor: ew-resize; }
+    .rh-e  { right: -5px; top: 50%; transform: translateY(-50%); width: 8px; height: 20px; border-radius: 4px; cursor: ew-resize; }
+
+    .shape-top-rotator {
+      display: none;
+      position: absolute;
+      top: -68px;
+      left: 50%;
+      transform: translateX(-50%);
+      flex-direction: column;
+      align-items: center;
+      z-index: 62;
+      pointer-events: auto;
+    }
+    .editor-item.selected .shape-top-rotator {
+      display: flex;
+    }
+    .shape-rotate-knob {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: var(--primary);
+      color: #ffffff;
+      border: 2px solid #ffffff;
+      box-shadow: 0 2px 6px rgba(23, 37, 84, 0.3);
+      display: grid;
+      place-items: center;
+      cursor: grab;
+      touch-action: none;
+      padding: 0;
+    }
+    .shape-rotate-knob:active { cursor: grabbing; }
+    .shape-rotate-stem {
+      width: 2px;
+      height: 8px;
+      background: var(--primary);
+    }
+  `;
+  document.head.appendChild(styleEl);
+
+  // =========================================================================
+  // 1(a). TOP-FIXED SUB-BAR FOR SHAPES & HIGHLIGHT (EDIT PDF & EDIT IMG)
+  // =========================================================================
+  function buildTopHighlightBar(prefix) {
+    const isPdf = prefix === "pe";
+    const mode = isPdf ? peHighlightMode : ieHighlightMode;
+    const hex = isPdf ? peActiveHighlightHex : ieActiveHighlightHex;
+    return `
+      <span class="sub-bar-msg">Highlight:</span>
+      <button class="dd-option-btn ${mode === "pen" ? "active" : ""}" onclick="${prefix}SelectHighlightMode('pen')">
+        ${icon("pen-line")} Pen
+      </button>
+      <button class="dd-option-btn ${mode === "box" ? "active" : ""}" onclick="${prefix}SelectHighlightMode('box')">
+        ${icon("square")} Box Strip
+      </button>
+      <div class="studio-divider"></div>
+      <span style="font-size:11px;font-weight:700;color:var(--text-secondary);">Color:</span>
+      ${studioRenderColorSwatches(["#facc15", "#4ade80", "#f472b6", "#38bdf8", "#fb923c"], hex, `${prefix}SetHighlightColor`, true)}
+    `;
+  }
+
+  function buildTopShapesBar(prefix) {
+    const isPdf = prefix === "pe";
+    const subMode = isPdf ? peShapeSubMode : ieShapeSubMode;
+    const picking = isPdf ? pePickingShapeTarget : iePickingShapeTarget;
+    const strokeCol = isPdf ? peActiveShapeColor : ieActiveColor;
+    const fillCol = isPdf ? peActiveShapeFill : ieActiveShapeFill;
+    const shapes = [
+      ["rect", "Rectangle", `<svg width="16" height="12" viewBox="0 0 24 18"><rect x="2" y="2" width="20" height="14" fill="none" stroke="currentColor" stroke-width="2"/></svg>`],
+      ["circle", "Circle", `<svg width="14" height="14" viewBox="0 0 20 20"><circle cx="10" cy="10" r="8" fill="none" stroke="currentColor" stroke-width="2"/></svg>`],
+      ["line", "Line", `<svg width="16" height="14" viewBox="0 0 20 20"><line x1="2" y1="18" x2="18" y2="2" stroke="currentColor" stroke-width="2"/></svg>`],
+      ["arrow", "Arrow", `<svg width="16" height="14" viewBox="0 0 22 20"><line x1="2" y1="10" x2="16" y2="10" stroke="currentColor" stroke-width="2"/><polygon points="21,10 14,5 14,15" fill="currentColor"/></svg>`]
+    ];
+    return `
+      <span class="sub-bar-msg">Shapes:</span>
+      ${shapes.map(([st, title, svg]) => `
+        <button class="shape-icon-btn ${subMode === st && !picking ? "active" : ""}" onclick="${prefix}SelectShapeAction('${st}')" title="${title}">${svg}</button>
+      `).join("")}
+      <button class="dd-option-btn ${subMode === "freehand" && !picking ? "active" : ""}" onclick="${prefix}SelectShapeFreehand()" title="Freehand Draw">
+        ${icon("brush")} Draw
+      </button>
+      <div class="studio-divider"></div>
+      <span style="font-size:11px;font-weight:700;color:var(--text-secondary);">Outline:</span>
+      <div class="color-swatch no-fill-swatch ${strokeCol === "none" ? "selected" : ""}" title="No Outline" onclick="${prefix}SetShapeOutlineColor('none', this)"></div>
+      ${studioRenderColorSwatches(["#ef4444", "#2563eb", "#16a34a", "#000000"], strokeCol, `${prefix}SetShapeOutlineColor`, true)}
+      <button class="dd-option-btn ${picking === "outline" ? "active" : ""}" onclick="${prefix}ToggleShapeEyedropper('outline')" title="Pick Outline Color">
+        ${icon("pipette", 12)}
+      </button>
+      <div class="studio-divider"></div>
+      <span style="font-size:11px;font-weight:700;color:var(--text-secondary);">Fill:</span>
+      <div class="color-swatch no-fill-swatch ${fillCol === "none" ? "selected" : ""}" title="No Fill" onclick="${prefix}SetShapeFillColor('none', this)"></div>
+      ${studioRenderColorSwatches(["#ef4444", "#facc15", "#2563eb", "#16a34a", "#ffffff"], fillCol, `${prefix}SetShapeFillColor`, true)}
+      <button class="dd-option-btn ${picking === "fill" ? "active" : ""}" onclick="${prefix}ToggleShapeEyedropper('fill')" title="Pick Fill Color">
+        ${icon("pipette", 12)}
+      </button>
+    `;
+  }
+
+  // Override peRefreshSubBar & ieSetTool to render Highlight and Shapes fixed in top sub-bar
+  const origPeRefreshSubBar = window.peRefreshSubBar;
+  window.peRefreshSubBar = function () {
+    const subBar = $("peSubBar");
+    const found = peFindSelectedItem();
+    const selectedShape = found && found.item.type === "shape";
+    const selectedHighlight = found && (found.item.type === "highlight" || (found.item.type === "freehandPath" && found.item.isHighlighter));
+
+    if (peCurrentTool === "highlight" || selectedHighlight) {
+      subBar.classList.add("visible");
+      subBar.innerHTML = buildTopHighlightBar("pe");
+      if (window.lucide) lucide.createIcons();
+      return;
+    }
+    if (peCurrentTool === "shapes" || selectedShape) {
+      subBar.classList.add("visible");
+      subBar.innerHTML = buildTopShapesBar("pe");
+      if (window.lucide) lucide.createIcons();
+      return;
+    }
+    origPeRefreshSubBar();
+  };
+
+  const origPeSelectShapeAction = window.peSelectShapeAction;
+  window.peSelectShapeAction = function (st) {
+    origPeSelectShapeAction(st);
+    peRefreshSubBar();
+  };
+  const origPeSelectShapeFreehand = window.peSelectShapeFreehand;
+  window.peSelectShapeFreehand = function () {
+    origPeSelectShapeFreehand();
+    peRefreshSubBar();
+  };
+  const origPeSelectHighlightMode = window.peSelectHighlightMode;
+  window.peSelectHighlightMode = function (m) {
+    origPeSelectHighlightMode(m);
+    peRefreshSubBar();
+  };
+  const origPeSetShapeOutlineColor = window.peSetShapeOutlineColor;
+  window.peSetShapeOutlineColor = function (hex, el) {
+    origPeSetShapeOutlineColor(hex, el);
+    peRefreshSubBar();
+  };
+  const origPeSetShapeFillColor = window.peSetShapeFillColor;
+  window.peSetShapeFillColor = function (hex, el) {
+    origPeSetShapeFillColor(hex, el);
+    peRefreshSubBar();
+  };
+  const origPeSetHighlightColor = window.peSetHighlightColor;
+  window.peSetHighlightColor = function (hex, el) {
+    origPeSetHighlightColor(hex, el);
+    peRefreshSubBar();
+  };
+
+  function ieRefreshSubBar() {
+    const subBar = $("ieSubBar");
+    if (!subBar) return;
+    const item = ieAnnotations.find(x => x.id === ieSelectedElementId);
+    const selectedText = item && item.type === "text";
+    const selectedShape = item && item.type === "shape";
+    const selectedHighlight = item && (item.type === "highlight" || (item.type === "freehandPath" && item.isHighlighter));
+
+    if (ieCurrentTool === "highlight" || selectedHighlight) {
+      subBar.classList.add("visible");
+      subBar.innerHTML = buildTopHighlightBar("ie");
+      if (window.lucide) lucide.createIcons();
+      return;
+    }
+    if (ieCurrentTool === "shapes" || selectedShape) {
+      subBar.classList.add("visible");
+      subBar.innerHTML = buildTopShapesBar("ie");
+      if (window.lucide) lucide.createIcons();
+      return;
+    }
+    if (ieCurrentTool === "addText" || selectedText) {
+      const currColor = selectedText ? (item.color || "#000000") : (ieActiveColor === "none" ? "#000000" : ieActiveColor);
+      const currSize = selectedText ? (item.fontSize || ieActiveFontSize) : ieActiveFontSize;
+      subBar.classList.add("visible");
+      subBar.innerHTML = `
+        <span class="sub-bar-msg">Text Format:</span>
+        ${studioRenderColorSwatches(["#000000", "#ffffff", "#dc2626", "#2563eb", "#15803d"], currColor, "ieSetTextColor", true)}
+        <select class="sub-select" onchange="ieUpdateSelectedFontSize(this.value)">
+          ${[12, 14, 16, 18, 20, 24, 28, 32, 36, 42, 48].map(sz => `<option value="${sz}" ${currSize === sz ? "selected" : ""}>${sz}px</option>`).join("")}
+        </select>
+      `;
+      if (window.lucide) lucide.createIcons();
+    }
+  }
+
+  const origIeSetTool = window.ieSetTool;
+  window.ieSetTool = function (tool) {
+    origIeSetTool(tool);
+    ieRefreshSubBar();
+  };
+  const origIeSelectShapeAction = window.ieSelectShapeAction;
+  window.ieSelectShapeAction = function (st) {
+    origIeSelectShapeAction(st);
+    ieRefreshSubBar();
+  };
+  const origIeSelectShapeFreehand = window.ieSelectShapeFreehand;
+  window.ieSelectShapeFreehand = function () {
+    origIeSelectShapeFreehand();
+    ieRefreshSubBar();
+  };
+  const origIeSelectHighlightMode = window.ieSelectHighlightMode;
+  window.ieSelectHighlightMode = function (m) {
+    origIeSelectHighlightMode(m);
+    ieRefreshSubBar();
+  };
+  const origIeSetShapeOutlineColor = window.ieSetShapeOutlineColor;
+  window.ieSetShapeOutlineColor = function (hex, el) {
+    origIeSetShapeOutlineColor(hex, el);
+    ieRefreshSubBar();
+  };
+  const origIeSetShapeFillColor = window.ieSetShapeFillColor;
+  window.ieSetShapeFillColor = function (hex, el) {
+    origIeSetShapeFillColor(hex, el);
+    ieRefreshSubBar();
+  };
+  const origIeSetHighlightColor = window.ieSetHighlightColor;
+  window.ieSetHighlightColor = function (hex, el) {
+    origIeSetHighlightColor(hex, el);
+    ieRefreshSubBar();
+  };
+
+  // =========================================================================
+  // 1(b). ZOOM ON SAME PAGE (PREVENT JUMPING TO 1ST PAGE)
+  // =========================================================================
+  window.peChangeZoom = async function (delta) {
+    if (!pePdfDoc) return;
+    const lockedPage = peCurrentPage || 1;
+    const oldStage = pePagesContainer.querySelector(`.page-stage[data-page-num="${lockedPage}"]`);
+    const wsRect = peWorkspace.getBoundingClientRect();
+    const offsetFromTop = oldStage ? (oldStage.getBoundingClientRect().top - wsRect.top) : 16;
+
+    const oldScale = peScale;
+    peScale = Math.min(2.8, Math.max(0.3, +(peScale + delta).toFixed(2)));
+    peRescaleAllAnnotations(peScale / oldScale);
+    await peRenderAllPages();
+
+    const newStage = pePagesContainer.querySelector(`.page-stage[data-page-num="${lockedPage}"]`);
+    if (newStage) {
+      peWorkspace.scrollTop = Math.max(0, newStage.offsetTop - offsetFromTop);
+    }
+    peCurrentPage = lockedPage;
+    peUpdateUIState();
+  };
+
+  // =========================================================================
+  // 1(c) & 1(d). FIT TO PAGE / FIT TO WIDTH TOGGLE + CLEAR WORKSPACE
+  // =========================================================================
+  let peFitMode = "page";
+  window.peFitPdfToWidth = async function (showFeedback = true) {
+    if (!pePdfDoc) return;
+    const lockedPage = peCurrentPage || 1;
+    const page = await pePdfDoc.getPage(lockedPage);
+    const vp = page.getViewport({ scale: 1, rotation: peGlobalRotationDeg });
+    const crop = pePageCropBoxes[lockedPage];
+    const width = crop ? vp.width * crop.rw : vp.width;
+    const next = Math.max(0.25, Math.min(2.8, +((peWorkspace.clientWidth - 96) / width).toFixed(3)));
+    peRescaleAllAnnotations(next / peScale);
+    peScale = next;
+    await peRenderAllPages();
+    const st = pePagesContainer.querySelector(`.page-stage[data-page-num="${lockedPage}"]`);
+    if (st) peWorkspace.scrollTop = Math.max(0, st.offsetTop - 16);
+    peCurrentPage = lockedPage;
+    peUpdateUIState();
+    if (showFeedback) window.showAppToast(`Fit to Width (${Math.round(peScale * 100)}%)`, "info");
+  };
+
+  window.peToggleFitMode = async function () {
+    if (!pePdfDoc) { window.showAppToast("Please open a PDF file first.", "error"); return; }
+    const btn = $("peFitToggleBtn");
+    if (peFitMode === "page") {
+      peFitMode = "width";
+      if (btn) btn.innerHTML = `${icon("arrow-left-right")} <span>Fit to Width</span>`;
+      await peFitPdfToWidth(true);
+    } else {
+      peFitMode = "page";
+      if (btn) btn.innerHTML = `${icon("maximize-2")} <span>Fit to Page</span>`;
+      const lockedPage = peCurrentPage || 1;
+      await peFitPdfToPage(true);
+      const st = pePagesContainer.querySelector(`.page-stage[data-page-num="${lockedPage}"]`);
+      if (st) peWorkspace.scrollTop = Math.max(0, st.offsetTop - 16);
+      peCurrentPage = lockedPage;
+      peUpdateUIState();
+    }
+    if (window.lucide) lucide.createIcons();
+  };
+
+  window.peClearWorkspace = function () {
+    pePdfBytes = null;
+    pePdfDoc = null;
+    peTotalPages = 0;
+    peCurrentPage = 1;
+    pePageAnnotations = {};
+    pePageEnhanced = {};
+    pePageCropBoxes = {};
+    peExtractedTextItems = {};
+    pePageDimensions = {};
+    peUndoStack = [];
+    peRedoStack = [];
+    peSelectedElementId = null;
+    peOpenColorPopoverId = null;
+    pePagesContainer.innerHTML = "";
+    pePagesContainer.style.display = "none";
+    $("peFileInput").value = "";
+    $("peEmptyState").style.display = "flex";
+    $("pePromoBannerSlot")?.classList.remove("hidden");
+    peUpdateUIState();
+    window.showAppToast("PDF workspace cleared.", "info");
+  };
+
+  let ieFitMode = "page";
+  window.ieFitImageToWidth = function (showFeedback = true) {
+    if (!ieBaseOriginalImage) return;
+    const next = Math.max(0.1, Math.min(3.5, +((ieWorkspace.clientWidth - 96) / ieWorkingCanvas.width).toFixed(3)));
+    const ratio = next / ieScale;
+    ieAnnotations.forEach(a => {
+      a.x *= ratio; a.y *= ratio; a.w *= ratio; a.h *= ratio;
+      if (a.x1 !== undefined) a.x1 *= ratio;
+      if (a.y1 !== undefined) a.y1 *= ratio;
+      if (a.x2 !== undefined) a.x2 *= ratio;
+      if (a.y2 !== undefined) a.y2 *= ratio;
+      if (a.fontSize) a.fontSize = Math.round(a.fontSize * ratio);
+      if (a.points) a.points = a.points.map(p => ({ x: p.x * ratio, y: p.y * ratio }));
+      if (a.strokeWidth) a.strokeWidth *= ratio;
+    });
+    ieScale = next;
+    ieRenderStage();
+    if (showFeedback) window.showAppToast(`Fit to Width (${Math.round(ieScale * 100)}%)`, "info");
+  };
+
+  window.ieToggleFitMode = function () {
+    if (!ieBaseOriginalImage) { window.showAppToast("Please open an image first.", "error"); return; }
+    const btn = $("ieFitToggleBtn");
+    if (ieFitMode === "page") {
+      ieFitMode = "width";
+      if (btn) btn.innerHTML = `${icon("arrow-left-right")} <span>Fit to Width</span>`;
+      ieFitImageToWidth(true);
+    } else {
+      ieFitMode = "page";
+      if (btn) btn.innerHTML = `${icon("maximize-2")} <span>Fit to Page</span>`;
+      ieFitImageToScreen(true);
+    }
+    if (window.lucide) lucide.createIcons();
+  };
+
+  window.ieClearWorkspace = function () {
+    ieBaseOriginalImage = null;
+    ieWorkingCanvas.width = 1;
+    ieWorkingCanvas.height = 1;
+    ieAnnotations = [];
+    ieUndoStack = [];
+    ieRedoStack = [];
+    ieSelectedElementId = null;
+    ieOpenColorPopoverId = null;
+    ieOverlayLayer.innerHTML = "";
+    ieFreehandLayer.innerHTML = "";
+    ieImageStage.style.display = "none";
+    $("ieFileInput").value = "";
+    $("ieEmptyState").style.display = "flex";
+    $("iePromoBannerSlot")?.classList.remove("hidden");
+    $("ieDimIndicator").textContent = "0×0";
+    $("ieZoomIndicator").textContent = "100%";
+    window.showAppToast("Image workspace cleared.", "info");
+  };
+
+  // =========================================================================
+  // 2(a), 2(b), 2(c). SHAPES: 4-WAY RESIZE, COPY/PASTE, TOP ROTATION HANDLE
+  // =========================================================================
+  let clipboardShapeOrItem = null;
+  let clipboardEditorType = null;
+
+  function duplicateItem(item, type, pageNum) {
+    const clone = JSON.parse(JSON.stringify(item));
+    clone.id = "item_" + Date.now() + "_" + Math.random().toString(36).slice(2, 7);
+    clone.x = (clone.x || 0) + 22;
+    clone.y = (clone.y || 0) + 22;
+    if (type === "pdf") {
+      peSaveHistorySnapshot();
+      const p = pageNum || peCurrentPage || 1;
+      pePageAnnotations[p] = pePageAnnotations[p] || [];
+      pePageAnnotations[p].push(clone);
+      peSelectedElementId = clone.id;
+      peRenderAllOverlays();
+    } else {
+      ieSaveHistorySnapshot();
+      ieAnnotations.push(clone);
+      ieSelectedElementId = clone.id;
+      ieRenderOverlay();
+    }
+  }
+
+  function enhanceShapeElements(root, type) {
+    if (!root) return;
+    root.querySelectorAll(".editor-item").forEach(el => {
+      const id = el.dataset.itemId;
+      const pNum = Number(el.closest(".page-stage")?.dataset.pageNum) || peCurrentPage || 1;
+      const arr = type === "pdf" ? (pePageAnnotations[pNum] || []) : ieAnnotations;
+      const item = arr.find(x => x.id === id);
+      if (!item || item.type !== "shape") return;
+
+      el.style.transform = `rotate(${Number(item.rotation || 0)}deg)`;
+      el.style.transformOrigin = "center center";
+
+      // 2(c). Top Rotation Knob + Drag-to-Rotate + Click 15° step
+      if (!el.querySelector(".shape-top-rotator")) {
+        const rotWrap = document.createElement("div");
+        rotWrap.className = "shape-top-rotator";
+        rotWrap.innerHTML = `
+          <button type="button" class="shape-rotate-knob" title="Drag to rotate or click (+15°)">
+            ${icon("rotate-cw", 12)}
+          </button>
+          <div class="shape-rotate-stem"></div>
+        `;
+        const knob = rotWrap.querySelector(".shape-rotate-knob");
+        let rotating = false, moved = false, startAngle = 0, baseRot = 0;
+
+        knob.addEventListener("pointerdown", e => {
+          e.preventDefault();
+          e.stopPropagation();
+          if (type === "pdf") peSaveHistorySnapshot(); else ieSaveHistorySnapshot();
+          rotating = true;
+          moved = false;
+          const rect = el.getBoundingClientRect();
+          const cx = rect.left + rect.width / 2;
+          const cy = rect.top + rect.height / 2;
+          startAngle = Math.atan2(e.clientY - cy, e.clientX - cx) * (180 / Math.PI);
+          baseRot = Number(item.rotation || 0);
+          knob.setPointerCapture(e.pointerId);
+        });
+
+        knob.addEventListener("pointermove", e => {
+          if (!rotating) return;
+          moved = true;
+          const rect = el.getBoundingClientRect();
+          const cx = rect.left + rect.width / 2;
+          const cy = rect.top + rect.height / 2;
+          const currAngle = Math.atan2(e.clientY - cy, e.clientX - cx) * (180 / Math.PI);
+          item.rotation = Math.round((baseRot + (currAngle - startAngle) + 360) % 360);
+          el.style.transform = `rotate(${item.rotation}deg)`;
+        });
+
+        knob.addEventListener("pointerup", e => {
+          if (!rotating) return;
+          rotating = false;
+          if (knob.hasPointerCapture(e.pointerId)) knob.releasePointerCapture(e.pointerId);
+          if (!moved) {
+            item.rotation = ((Number(item.rotation || 0) + 15) % 360);
+            el.style.transform = `rotate(${item.rotation}deg)`;
+          }
+        });
+
+        el.appendChild(rotWrap);
+      }
+
+      // 2(b). Copy button in floating toolbar
+      const controls = el.querySelector(".item-controls");
+      if (controls && !controls.querySelector(".shape-copy-btn")) {
+        const copyBtn = document.createElement("button");
+        copyBtn.type = "button";
+        copyBtn.className = "ctrl-mini-btn shape-copy-btn";
+        copyBtn.title = "Copy & Paste Shape (Ctrl+C / Ctrl+V)";
+        copyBtn.innerHTML = icon("copy", 13);
+        copyBtn.addEventListener("click", e => {
+          e.stopPropagation();
+          clipboardShapeOrItem = JSON.parse(JSON.stringify(item));
+          clipboardEditorType = type;
+          duplicateItem(item, type, pNum);
+          window.showAppToast("Shape copied & pasted!", "success");
+        });
+        controls.insertBefore(copyBtn, controls.querySelector(".del"));
+      }
+
+      // 2(a). 4-Way Resize (4 edges + 4 corners)
+      el.querySelectorAll(".resize-handle").forEach(h => h.remove());
+      ["nw", "ne", "sw", "se", "n", "s", "w", "e"].forEach(dir => {
+        const h = document.createElement("div");
+        h.className = `resize-handle rh-4way rh-${dir}`;
+        let sx = 0, sy = 0, ox = 0, oy = 0, ow = 0, oh = 0, ox1 = 0, oy1 = 0, ox2 = 0, oy2 = 0;
+
+        h.addEventListener("pointerdown", e => {
+          e.preventDefault();
+          e.stopPropagation();
+          if (type === "pdf") peSaveHistorySnapshot(); else ieSaveHistorySnapshot();
+          sx = e.clientX; sy = e.clientY;
+          ox = item.x; oy = item.y; ow = item.w; oh = item.h;
+          ox1 = item.x1; oy1 = item.y1; ox2 = item.x2; oy2 = item.y2;
+          h.setPointerCapture(e.pointerId);
+        });
+
+        h.addEventListener("pointermove", e => {
+          if (!h.hasPointerCapture(e.pointerId)) return;
+          const dx = e.clientX - sx, dy = e.clientY - sy;
+          let nx = ox, ny = oy, nw = ow, nh = oh;
+
+          if (dir.includes("e")) nw = Math.max(16, ow + dx);
+          if (dir.includes("s")) nh = Math.max(16, oh + dy);
+          if (dir.includes("w")) {
+            const clamped = Math.min(ow - 16, dx);
+            nw = ow - clamped;
+            nx = ox + clamped;
+          }
+          if (dir.includes("n")) {
+            const clamped = Math.min(oh - 16, dy);
+            nh = oh - clamped;
+            ny = oy + clamped;
+          }
+
+          item.x = nx; item.y = ny; item.w = nw; item.h = nh;
+          el.style.left = nx + "px";
+          el.style.top = ny + "px";
+          el.style.width = nw + "px";
+          el.style.height = nh + "px";
+
+          if (item.shapeType === "line" || item.shapeType === "arrow") {
+            const rx = nw / ow, ry = nh / oh;
+            item.x1 = (ox1 || 0) * rx; item.y1 = (oy1 || 0) * ry;
+            item.x2 = (ox2 || ow) * rx; item.y2 = (oy2 || oh) * ry;
+            const svg = el.querySelector("svg");
+            if (svg) svg.outerHTML = studioGetShapeSVG(item);
+          }
+        });
+
+        h.addEventListener("pointerup", e => {
+          if (h.hasPointerCapture(e.pointerId)) h.releasePointerCapture(e.pointerId);
+        });
+        el.appendChild(h);
+      });
+    });
+    if (window.lucide) lucide.createIcons();
+  }
+
+  const origPeRenderOverlays = window.peRenderAllOverlays;
+  window.peRenderAllOverlays = function () {
+    origPeRenderOverlays();
+    enhanceShapeElements($("pePagesContainer"), "pdf");
+  };
+
+  const origIeRenderOverlay = window.ieRenderOverlay;
+  window.ieRenderOverlay = function () {
+    origIeRenderOverlay();
+    enhanceShapeElements($("ieOverlayLayer"), "img");
+    ieRefreshSubBar();
+  };
+
+  // Keyboard Ctrl+C / Ctrl+V for shapes & elements
+  document.addEventListener("keydown", e => {
+    if (!(e.ctrlKey || e.metaKey)) return;
+    if (document.activeElement && document.activeElement.isContentEditable) return;
+    const inPdf = $("pdfEditorView")?.classList.contains("active");
+    const inImg = $("imgEditorView")?.classList.contains("active");
+    if (!inPdf && !inImg) return;
+
+    if (e.key.toLowerCase() === "c") {
+      let item = null;
+      if (inPdf) {
+        for (const list of Object.values(pePageAnnotations || {})) {
+          item = list.find(x => x.id === peSelectedElementId);
+          if (item) break;
+        }
+      } else {
+        item = ieAnnotations.find(x => x.id === ieSelectedElementId);
+      }
+      if (item) {
+        clipboardShapeOrItem = JSON.parse(JSON.stringify(item));
+        clipboardEditorType = inPdf ? "pdf" : "img";
+        e.preventDefault();
+        window.showAppToast("Copied! Press Ctrl+V to paste.", "info");
+      }
+    } else if (e.key.toLowerCase() === "v" && clipboardShapeOrItem && clipboardEditorType === (inPdf ? "pdf" : "img")) {
+      e.preventDefault();
+      duplicateItem(clipboardShapeOrItem, clipboardEditorType, peCurrentPage || 1);
+      window.showAppToast("Pasted!", "success");
+    }
+  });
+
+  // =========================================================================
+  // 3. EDIT TEXT / ADD TEXT: TOP BAR TEXT INCREASE (A+) & DECREASE (A-) BUTTONS
+  // =========================================================================
+  function adjustEditorTextSize(type, delta) {
+    if (type === "pdf") {
+      const found = peFindSelectedItem();
+      if (found && (found.item.type === "text" || found.item.type === "replaceText")) {
+        peSaveHistorySnapshot();
+        found.item.fontSize = Math.max(8, Math.min(120, (found.item.fontSize || 16) + delta));
+        peActiveFontSize = found.item.fontSize;
+        peRefreshSubBar();
+        peRenderAllOverlays();
+      } else {
+        peActiveFontSize = Math.max(8, Math.min(120, (peActiveFontSize || 16) + delta));
+        peRefreshSubBar();
+        window.showAppToast(`Text size: ${peActiveFontSize}px`, "info");
+      }
+    } else {
+      const item = ieAnnotations.find(x => x.id === ieSelectedElementId);
+      if (item && item.type === "text") {
+        ieSaveHistorySnapshot();
+        item.fontSize = Math.max(8, Math.min(120, (item.fontSize || 18) + delta));
+        ieActiveFontSize = item.fontSize;
+        ieRenderOverlay();
+      } else {
+        ieActiveFontSize = Math.max(8, Math.min(120, (ieActiveFontSize || 18) + delta));
+        ieRefreshSubBar();
+        window.showAppToast(`Text size: ${ieActiveFontSize}px`, "info");
+      }
+    }
+  }
+
+  function injectTopTextSizeButtons(bar, type) {
+    if (!bar || bar.querySelector(".top-text-size-group")) return;
+    const grp = document.createElement("span");
+    grp.className = "top-text-size-group";
+    grp.style.cssText = "display:inline-flex;align-items:center;gap:4px;";
+    grp.innerHTML = `
+      <button type="button" class="ed-btn" title="Decrease Text Size (A-)" aria-label="Decrease Text Size">
+        ${icon("a-arrow-down", 14)} <span>A-</span>
+      </button>
+      <button type="button" class="ed-btn" title="Increase Text Size (A+)" aria-label="Increase Text Size">
+        ${icon("a-arrow-up", 14)} <span>A+</span>
+      </button>
+    `;
+    const [decBtn, incBtn] = grp.querySelectorAll("button");
+    decBtn.addEventListener("click", () => adjustEditorTextSize(type, -2));
+    incBtn.addEventListener("click", () => adjustEditorTextSize(type, 2));
+    const spacer = bar.querySelector(".studio-spacer");
+    if (spacer) bar.insertBefore(grp, spacer);
+    else bar.appendChild(grp);
+    if (window.lucide) lucide.createIcons();
+  }
+
+  injectTopTextSizeButtons($("pdfEditorView")?.querySelector(".studio-top-bar"), "pdf");
+  injectTopTextSizeButtons($("imgEditorView")?.querySelector(".studio-top-bar"), "img");
+})();
+</script>
 
 </body>
 </html>
